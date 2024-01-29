@@ -32,7 +32,7 @@ object Result {
     new Result(body)
 
   final def fromFuture[E <: Throwable, A](f: Throwable => E, body: Future[A])
-                                    (implicit ec: ExecutionContext): Result[E, A] =
+                                         (implicit ec: ExecutionContext): Result[E, A] =
     new Result(body.recoverWith {
       case e if NonFatal(e) => Future.failed(f(e))
     })
@@ -41,7 +41,8 @@ object Result {
   final def successful[A](value: A): Result[Nothing, A] =
     new Result(Future.successful(value))
 
-  final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])(implicit ec: ExecutionContext): Result[E, Seq[A]] = {
+  final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])
+                                       (implicit ec: ExecutionContext): Result[E, Seq[A]] = {
     val future = Future.sequence(results.map(_.toFuture))
     new Result(future)
   }
