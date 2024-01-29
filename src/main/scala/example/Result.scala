@@ -5,7 +5,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-class Result[+E <: Throwable, +A](future: Future[A]) {
+class Result[+E <: Throwable, +A] private (future: Future[A]) {
   def toFuture: Future[A] = future
 
   // TODO: Fatal Error on exception in f
@@ -14,9 +14,11 @@ class Result[+E <: Throwable, +A](future: Future[A]) {
     new Result(future.map(f))
 
   def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] = {
-    val newFuture: Future[B] = future.flatMap { a =>
-      f(a).toFuture
-    }
+    val newFuture = 
+      for {
+        a <- future
+        b <- f(a).toFuture 
+      } yield b
     new Result[E2, B](newFuture)
   }
 
