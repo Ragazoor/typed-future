@@ -41,12 +41,6 @@ object Result {
   final def successful[A](value: A): Result[Nothing, A] =
     new Result(Future.successful(value))
 
-  final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])
-                                       (implicit ec: ExecutionContext): Result[E, Seq[A]] = {
-    val future = Future.sequence(results.map(_.toFuture))
-    new Result(future)
-  }
-
   final def failed[E <: Throwable](exception: E): Result[E, Nothing] =
     new Result(Future.failed(exception))
 
@@ -63,6 +57,11 @@ object Result {
     }
     new Result(future)
   }
+
+  final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])
+                                       (implicit ec: ExecutionContext): Result[E, Seq[A]] = 
+    new Result(Future.sequence(results.map(_.toFuture)))
+
 }
 
 object Main extends App {
