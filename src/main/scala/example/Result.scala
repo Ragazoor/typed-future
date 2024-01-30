@@ -1,5 +1,6 @@
 package example
 
+import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -20,12 +21,35 @@ class Result[+E <: Throwable, +A](future: Future[A]) {
     new Result[E2, B](newFuture)
   }
 
+  def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Result[E2, B]): Result[E2, B] =
+    flatMap(ev)(parasitic)
+
   def onComplete(f: Try[A] => Unit)(implicit ec: ExecutionContext): Unit =
     future.onComplete(f)
+
+  def filter(p: A => Boolean)(implicit executor: ExecutionContext): Result[E, A] =
+    new Result(future.filter(p))
+
+  final def withFilter(p: A => Boolean)(implicit executor: ExecutionContext): Result[E, A] =
+    filter(p)(executor)
+
+  def collect[B](pf: PartialFunction[A, B])(implicit executor: ExecutionContext): Result[E, B] =
+    new Result(future.collect(pf))
+
+  def zip[E2 >: E <: Throwable, B](that: Result[E2, B]): Result[E2, (A, B)] =
+    zipWith(that)(Result.zipWithTuple2Fun)(parasitic)
+
+  def zipWith[E2 >: E <: Throwable, U, R](that: Result[E2, U])(f: (A, U) => R)
+                                         (implicit executor: ExecutionContext): Result[E2, R] =
+    new Result(future.zipWith(that.toFuture)(f))
 
 }
 
 object Result {
+  private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply _
+
+  private[example] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
+    _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
 
 
   final def fromFuture[A](body: Future[A])(implicit ec: ExecutionContext): Result[Throwable, A] =
@@ -70,7 +94,9 @@ object Main extends App {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   sealed abstract class RootError extends Throwable
+
   case class MyError(error: Throwable) extends RootError
+
   case class MyError2(error: Throwable) extends RootError
 
   private val result: Result[RootError, Unit] = for {
@@ -87,7 +113,7 @@ object Main extends App {
     case Failure(_) =>
       System.exit(1)
   }
-  Await.ready(result.toFuture, Duration.apply("10s"))
 
+  Await.ready(result.toFuture, Duration.apply("10s"))
 
 }
