@@ -70,14 +70,16 @@ object Result {
   def unapply[E <: Throwable, A](result: Result[E, A]): Option[Future[A]] =
     Some(result.toFuture)
 
-  final def fromFuture[A](body: Future[A])(implicit
-                                           ec: ExecutionContext
-  ): Result[Throwable, A] =
+  final def apply[A](body: A)(implicit ec: ExecutionContext): Result[Throwable, A] =
+    Result.fromFuture(Future(body)(ec))
+
+  final def apply[E <: Throwable, A](f: Throwable => E, body: A)(implicit ec: ExecutionContext): Result[E, A] =
+    Result.fromFuture(f, Future(body)(ec))
+
+  final def fromFuture[A](body: Future[A])(implicit ec: ExecutionContext): Result[Throwable, A] =
     new Result(body)
 
-  final def fromFuture[E <: Throwable, A](f: Throwable => E, body: Future[A])(implicit
-                                                                              ec: ExecutionContext
-  ): Result[E, A] =
+  final def fromFuture[E <: Throwable, A](f: Throwable => E, body: Future[A])(implicit ec: ExecutionContext): Result[E, A] =
     new Result(body.recoverWith {
       case e if NonFatal(e) => Future.failed(f(e))
     })
