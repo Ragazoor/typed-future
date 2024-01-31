@@ -4,7 +4,7 @@ import munit.FunSuite
 
 import scala.concurrent.Future
 
-class HelloSpec extends FunSuite {
+class ResultSpec extends FunSuite {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -40,8 +40,8 @@ class HelloSpec extends FunSuite {
     } yield assertEquals(a + b + c, 6)
     a.recover {
       case _: RuntimeException => assert(false)
-      case _: MyError2 => assert(false)
-      case _: MyError3 => assert(true)
+      case _: MyError2         => assert(false)
+      case _: MyError3         => assert(true)
     }
   }
   test("Result using sequence") {
@@ -70,9 +70,20 @@ class HelloSpec extends FunSuite {
   test("Result using flatten") {
     val result1 = Result.fromFuture(Future(1))
     val result2 = Result.fromFuture(Future(result1))
-      result2.flatten
-      .recoverWith { case _: IllegalArgumentException =>
-        Result.successful(assert(true))
-      }
+    result2.flatten.recoverWith { case _: IllegalArgumentException =>
+      Result.successful(assert(true))
+    }
+  }
+  test("Result apply works") {
+    val result        = Result(MyError, 1)
+    result.map(one => assertEquals(one, 1))
+  }
+
+  test("Result can fail using apply") {
+    def failingFunc() = throw new RuntimeException("test message")
+    val result        = Result(MyError, failingFunc())
+    result.recover { case _: MyError =>
+      assert(true)
+    }
   }
 }

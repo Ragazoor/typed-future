@@ -2,11 +2,11 @@ package example
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
-class Result[+E <: Throwable, +A] private(future: Future[A]) {
+class Result[+E <: Throwable, +A] private (future: Future[A]) {
   def toFuture: Future[A] = future
 
   // TODO: Fatal Error on exception in f
@@ -41,13 +41,14 @@ class Result[+E <: Throwable, +A] private(future: Future[A]) {
   def zip[E2 >: E <: Throwable, B](that: Result[E2, B]): Result[E2, (A, B)] =
     zipWith(that)(Result.zipWithTuple2Fun)(parasitic)
 
-  def zipWith[E2 >: E <: Throwable, U, R](that: Result[E2, U])(f: (A, U) => R)
-                                         (implicit executor: ExecutionContext): Result[E2, R] =
+  def zipWith[E2 >: E <: Throwable, U, R](that: Result[E2, U])(f: (A, U) => R)(implicit
+    executor: ExecutionContext
+  ): Result[E2, R] =
     new Result(future.zipWith(that.toFuture)(f))
 
   def recoverWith[E2 >: E <: Throwable, B >: A](
-                                                 pf: PartialFunction[E, Result[E2, B]]
-                                               )(implicit executor: ExecutionContext): Result[E2, B] =
+    pf: PartialFunction[E, Result[E2, B]]
+  )(implicit executor: ExecutionContext): Result[E2, B] =
     new Result(
       future.recoverWith(
         pf
@@ -70,16 +71,18 @@ object Result {
   def unapply[E <: Throwable, A](result: Result[E, A]): Option[Future[A]] =
     Some(result.toFuture)
 
-  final def apply[A](body: A)(implicit ec: ExecutionContext): Result[Throwable, A] =
+  final def apply[A](body: => A)(implicit ec: ExecutionContext): Result[Throwable, A] =
     Result.fromFuture(Future(body)(ec))
 
-  final def apply[E <: Throwable, A](f: Throwable => E, body: A)(implicit ec: ExecutionContext): Result[E, A] =
+  final def apply[E <: Throwable, A](f: Throwable => E, body: => A)(implicit ec: ExecutionContext): Result[E, A] =
     Result.fromFuture(f, Future(body)(ec))
 
   final def fromFuture[A](body: Future[A])(implicit ec: ExecutionContext): Result[Throwable, A] =
     new Result(body)
 
-  final def fromFuture[E <: Throwable, A](f: Throwable => E, body: Future[A])(implicit ec: ExecutionContext): Result[E, A] =
+  final def fromFuture[E <: Throwable, A](f: Throwable => E, body: Future[A])(implicit
+    ec: ExecutionContext
+  ): Result[E, A] =
     new Result(body.recoverWith {
       case e if NonFatal(e) => Future.failed(f(e))
     })
@@ -93,22 +96,8 @@ object Result {
   final def fromTry[A](body: Try[A]): Result[Throwable, A] =
     new Result(Future.fromTry(body))
 
-  final def attempt[E <: Throwable, A](
-                                        f: Throwable => E,
-                                        body: A
-                                      ): Result[E, A] = {
-    val future = Future.fromTry {
-      Try(body)
-        .fold(
-          e => Failure(f(e)),
-          a => Success(a)
-        )
-    }
-    new Result(future)
-  }
-
   final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])(implicit
-                                                                    ec: ExecutionContext
+    ec: ExecutionContext
   ): Result[E, Seq[A]] =
     new Result(Future.sequence(results.map(_.toFuture)))
 
@@ -125,9 +114,9 @@ object Main extends App {
   case class MyError2(error: Throwable) extends RootError
 
   private val result: Result[RootError, Unit] = for {
-    a <- Result.fromFuture(MyError, Future.successful(1)) // Result[MyError, Int]
+    a <- Result.fromFuture(MyError, Future.successful(1))  // Result[MyError, Int]
     b <- Result.fromFuture(MyError2, Future.successful(1)) // Result[MyError2, Int]
-    c <- Result.successful(1) // Result[Nothing, Int]
+    c <- Result.successful(1)                              // Result[Nothing, Int]
   } yield println(a + b + c)
 
   result.onComplete {
