@@ -29,15 +29,6 @@ class Result[+E <: Throwable, +A] private (future: Future[A]) {
   def onComplete(f: Try[A] => Unit)(implicit ec: ExecutionContext): Unit =
     future.onComplete(f)
 
-  def filter(p: A => Boolean)(implicit executor: ExecutionContext): Result[E, A] =
-    new Result(future.filter(p))
-
-  final def withFilter(p: A => Boolean)(implicit executor: ExecutionContext): Result[E, A] =
-    filter(p)(executor)
-
-  def collect[B](pf: PartialFunction[A, B])(implicit executor: ExecutionContext): Result[E, B] =
-    new Result(future.collect(pf))
-
   def zip[E2 >: E <: Throwable, B](that: Result[E2, B]): Result[E2, (A, B)] =
     zipWith(that)(Result.zipWithTuple2Fun)(parasitic)
 
@@ -57,7 +48,7 @@ class Result[+E <: Throwable, +A] private (future: Future[A]) {
       )
     )
 
-  def recover[B >: A](pf: PartialFunction[E, B])(implicit executor: ExecutionContext): Result[Nothing, B] =
+  def recover[B >: A](pf: PartialFunction[E, B])(implicit executor: ExecutionContext): Result[E, B] =
     new Result(future.recover(pf.asInstanceOf[PartialFunction[Throwable, B]]))
 
 }

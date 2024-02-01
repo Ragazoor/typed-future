@@ -74,16 +74,27 @@ class ResultSpec extends FunSuite {
       Result.successful(assert(true))
     }
   }
+
   test("Result apply works") {
-    val result        = Result(MyError, 1)
+    val result = Result(MyError, 1)
     result.map(one => assertEquals(one, 1))
   }
 
   test("Result can fail using apply") {
     def failingFunc() = throw new RuntimeException("test message")
-    val result        = Result(MyError, failingFunc())
+
+    val result = Result(MyError, failingFunc())
     result.recover { case _: MyError =>
       assert(true)
     }
   }
+
+  test("Result using zip") {
+    val result1 = Result(1)
+    val result2 = Result(2)
+    result1.zip(result2).map { tuple =>
+      assertEquals(tuple, (1, 2))
+    }
+  }
+
 }
