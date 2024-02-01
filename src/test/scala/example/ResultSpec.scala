@@ -34,14 +34,13 @@ class ResultSpec extends FunSuite {
   }
   test("Result using flatmap with typed errors") {
     val a = for {
-      a <- Result.fromFuture(MyError, Future(1))
-      b <- Result.fromFuture(MyError2, Future(2))
-      c <- Result.fromFuture(MyError3, Future.failed[Int](new RuntimeException))
-    } yield assertEquals(a + b + c, 6)
+      a <- Result.fromFuture(Future(1))
+      b <- Result.fromFuture(Future(2))
+      _ <- Result.failed(MyError(new RuntimeException("test message")))
+    } yield assertEquals(a + b, 3)
     a.recover {
       case _: RuntimeException => assert(false)
-      case _: MyError2         => assert(false)
-      case _: MyError3         => assert(true)
+      case _: MyError          => assert(true)
     }
   }
   test("Result using sequence") {
@@ -76,14 +75,14 @@ class ResultSpec extends FunSuite {
   }
 
   test("Result apply works") {
-    val result = Result(MyError, 1)
+    val result = Result(1)
     result.map(one => assertEquals(one, 1))
   }
 
   test("Result can fail using apply") {
     def failingFunc() = throw new RuntimeException("test message")
 
-    val result = Result(MyError, failingFunc())
+    val result = Result(failingFunc()).mapError(MyError)
     result.recover { case _: MyError =>
       assert(true)
     }
