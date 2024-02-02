@@ -17,13 +17,13 @@ class ResultSpec extends FunSuite {
     )
   )
 
-  abstract class RootError(e: Throwable) extends Throwable(e)
+  abstract class RootError(e: Throwable) extends Exception(e)
 
   case class MyError(e: Throwable) extends RootError(e)
 
   case class MyError2(e: Throwable) extends RootError(e)
 
-  case class MyError3(e: Throwable) extends Throwable(e)
+  case class MyError3(e: Throwable) extends RootError(e)
 
   test("Result using flatmap") {
     for {
@@ -96,4 +96,13 @@ class ResultSpec extends FunSuite {
     }
   }
 
+  test("Result catchAll") {
+    val a = for {
+      a <- Result.failed(MyError2(new IllegalArgumentException("Bad argument")))
+      _ <- Result.failed(MyError(new RuntimeException("test message")))
+    } yield assertEquals(a, -1)
+    a.catchAll {
+      _ => Result.succeed(assert(true))
+    }
+  }
 }
