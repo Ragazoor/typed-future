@@ -38,9 +38,9 @@ class ResultSpec extends FunSuite {
       b <- Result.fromFuture(Future(2))
       _ <- Result.failed(MyError(new RuntimeException("test message")))
     } yield assertEquals(a + b, 3)
-    a.recover {
-      case _: RuntimeException => assert(false)
-      case _: MyError          => assert(true)
+    a.catchSome {
+      case _: RuntimeException => Result.succeed(assert(false))
+      case _: MyError => Result.succeed(assert(true))
     }
   }
   test("Result using sequence") {
@@ -55,22 +55,22 @@ class ResultSpec extends FunSuite {
   test("Result fail with typed error") {
     def getResult(i: Int) =
       if (i < 2)
-        Result.successful(i)
+        Result.succeed(i)
       else
         Result.failed(new IllegalArgumentException("test message"))
 
     Result
       .sequence(Seq(1, 2, 3).map(getResult))
-      .recoverWith { case _: IllegalArgumentException =>
-        Result.successful(assert(true))
+      .catchSome {
+        case _: IllegalArgumentException => Result.succeed(assert(true))
       }
   }
 
   test("Result using flatten") {
     val result1 = Result.fromFuture(Future(1))
     val result2 = Result.fromFuture(Future(result1))
-    result2.flatten.recoverWith { case _: IllegalArgumentException =>
-      Result.successful(assert(true))
+    result2.flatten.catchSome {
+      case _: IllegalArgumentException => Result.succeed(assert(true))
     }
   }
 
@@ -80,11 +80,11 @@ class ResultSpec extends FunSuite {
   }
 
   test("Result can fail using apply") {
-    def failingFunc() = throw new RuntimeException("test message")
+    def failingFunc(): Unit = throw new RuntimeException("test message")
 
-    val result = Result(failingFunc()).mapError(MyError)
-    result.recover { case _: MyError =>
-      assert(true)
+    val result = Result[Unit](failingFunc()).mapError(MyError)
+    result.catchSome {
+      case _: MyError => Result.succeed(assert(true))
     }
   }
 
