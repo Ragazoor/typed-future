@@ -1,9 +1,9 @@
 package example
 
 import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Try}
+import scala.util.{ Failure, Try }
 
 trait Result[+E <: Throwable, +A] {
   self =>
@@ -26,8 +26,8 @@ trait Result[+E <: Throwable, +A] {
   def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): Result[E2, A] =
     Result[E2, A] {
       self.toFuture.transform {
-        case Failure(e: E) => Failure(f(e))
-        case success       => success
+        case Failure(e) => Failure(f(e.asInstanceOf[E]))
+        case success    => success
       }
     }
 
@@ -35,47 +35,46 @@ trait Result[+E <: Throwable, +A] {
     zipWith(that)(Result.zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: Result[E2, U])(f: (A, U) => R)(implicit
-                                                                               ec: ExecutionContext
+    ec: ExecutionContext
   ): Result[E2, R] =
     Result(toFuture.zipWith(that.toFuture)(f))
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Result[E2, A2])(implicit
-                                                                      ec: ExecutionContext
+    ec: ExecutionContext
   ): Result[E2, A2] =
     Result[E2, A2] {
       self.toFuture.transformWith {
-        case Failure(e: E) if NonFatal(e) => f(e).toFuture
-        case _                            => self.toFuture
+        case Failure(e) if NonFatal(e) => f(e.asInstanceOf[E]).toFuture
+        case _                         => self.toFuture
       }
     }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Result[E2, A2]])(implicit
-                                                                                       ec: ExecutionContext
+    ec: ExecutionContext
   ): Result[E2, A2] =
     Result[E2, A2] {
       self.toFuture.transformWith {
-        case Failure(e: E) if NonFatal(e) && pf.isDefinedAt(e) => pf(e).toFuture
-        case _                                                 => self.toFuture
+        case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) => pf(e.asInstanceOf[E]).toFuture
+        case _                                                              => self.toFuture
       }
     }
 }
 
-
 object Result {
 
-  final case class Attempt[+E <: Throwable, +A] private[example](future: Future[A]) extends Result[E, A] {
+  final case class Attempt[+E <: Throwable, +A] private[example] (future: Future[A]) extends Result[E, A] {
     override def toFuture: Future[A] = future
   }
 
-  private final case class Success[+A] private[example](success: A) extends Result[Nothing, A] {
+  private final case class Success[+A] private[example] (success: A) extends Result[Nothing, A] {
     override def toFuture: Future[A] = Future.successful(success)
   }
 
-  private final case class Failed[+E <: Exception] private[example](failure: E) extends Result[E, Nothing] {
+  private final case class Failed[+E <: Exception] private[example] (failure: E) extends Result[E, Nothing] {
     override def toFuture: Future[Nothing] = Future.failed(failure)
   }
 
-  private final case class Fatal[+E <: Throwable] private[example](failure: E) extends Result[Nothing, Nothing] {
+  private final case class Fatal[+E <: Throwable] private[example] (failure: E) extends Result[Nothing, Nothing] {
     override def toFuture: Future[Nothing] = Future.failed(failure)
   }
 

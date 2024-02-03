@@ -40,7 +40,7 @@ class ResultSpec extends FunSuite {
     } yield assertEquals(a + b, 3)
     a.catchSome {
       case _: RuntimeException => Result.succeed(assert(false))
-      case _: MyError => Result.succeed(assert(true))
+      case _: MyError          => Result.succeed(assert(true))
     }
   }
   test("Result using sequence") {
@@ -61,16 +61,16 @@ class ResultSpec extends FunSuite {
 
     Result
       .sequence(Seq(1, 2, 3).map(getResult))
-      .catchSome {
-        case _: IllegalArgumentException => Result.succeed(assert(true))
+      .catchSome { case _: IllegalArgumentException =>
+        Result.succeed(assert(true))
       }
   }
 
   test("Result using flatten") {
     val result1 = Result.fromFuture(Future(1))
     val result2 = Result.fromFuture(Future(result1))
-    result2.flatten.catchSome {
-      case _: IllegalArgumentException => Result.succeed(assert(true))
+    result2.flatten.catchSome { case _: IllegalArgumentException =>
+      Result.succeed(assert(true))
     }
   }
 
@@ -83,8 +83,8 @@ class ResultSpec extends FunSuite {
     def failingFunc(): Unit = throw new RuntimeException("test message")
 
     val result = Result[Unit](failingFunc()).mapError(MyError)
-    result.catchSome {
-      case _: MyError => Result.succeed(assert(true))
+    result.catchSome { case _: MyError =>
+      Result.succeed(assert(true))
     }
   }
 
@@ -101,8 +101,8 @@ class ResultSpec extends FunSuite {
       a <- Result.failed(MyError2(new IllegalArgumentException("Bad argument")))
       _ <- Result.failed(MyError(new RuntimeException("test message")))
     } yield assertEquals(a, -1)
-    a.catchAll {
-      _ => Result.succeed(assert(true))
+    a.catchAll { _ =>
+      Result.succeed(assert(true))
     }
   }
 }
