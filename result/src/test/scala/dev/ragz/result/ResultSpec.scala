@@ -1,4 +1,4 @@
-package example
+package dev.ragz.result
 
 import munit.FunSuite
 
@@ -36,7 +36,7 @@ class ResultSpec extends FunSuite {
     val a = for {
       a <- Result.fromFuture(Future(1))
       b <- Result.fromFuture(Future(2))
-      _ <- Result.failed(MyError(new RuntimeException("test message")))
+      _ <- Result.fail(MyError(new RuntimeException("test message")))
     } yield assertEquals(a + b, 3)
     a.catchSome {
       case _: RuntimeException => Result.succeed(assert(false))
@@ -57,7 +57,7 @@ class ResultSpec extends FunSuite {
       if (i < 2)
         Result.succeed(i)
       else
-        Result.failed(new IllegalArgumentException("test message"))
+        Result.fail(new IllegalArgumentException("test message"))
 
     Result
       .sequence(Seq(1, 2, 3).map(getResult))
@@ -98,11 +98,22 @@ class ResultSpec extends FunSuite {
 
   test("Result catchAll") {
     val a = for {
-      a <- Result.failed(MyError2(new IllegalArgumentException("Bad argument")))
-      _ <- Result.failed(MyError(new RuntimeException("test message")))
+      a <- Result.fail(MyError2(new IllegalArgumentException("Bad argument")))
+      _ <- Result.fail(MyError(new RuntimeException("test message")))
     } yield assertEquals(a, -1)
     a.catchAll { _ =>
       Result.succeed(assert(true))
+    }
+  }
+
+  test("Result cannot catch fatal errors") {
+    val a = for {
+      _ <- Result.fatal(MyError(new IllegalArgumentException("Bad argument")))
+    } yield assert(false)
+    a.catchAll { _ =>
+      Result.succeed(assert(false))
+    }.toFuture.recover { case _: FatalError =>
+      assert(true)
     }
   }
 }

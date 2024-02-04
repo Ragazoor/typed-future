@@ -1,8 +1,7 @@
-package example
+package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.control.NonFatal
 import scala.util.{ Failure, Try }
 
 trait Result[+E <: Throwable, +A] {
@@ -44,8 +43,8 @@ trait Result[+E <: Throwable, +A] {
   ): Result[E2, A2] =
     Result[E2, A2] {
       self.toFuture.transformWith {
-        case Failure(e) if NonFatal(e) => f(e.asInstanceOf[E]).toFuture
-        case _                         => self.toFuture
+        case Failure(e) if ResultNonFatal(e) => f(e.asInstanceOf[E]).toFuture
+        case _                               => self.toFuture
       }
     }
 
@@ -54,39 +53,41 @@ trait Result[+E <: Throwable, +A] {
   ): Result[E2, A2] =
     Result[E2, A2] {
       self.toFuture.transformWith {
-        case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) => pf(e.asInstanceOf[E]).toFuture
-        case _                                                              => self.toFuture
+        case Failure(e) if ResultNonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
+          pf(e.asInstanceOf[E]).toFuture
+        case _                                                                    =>
+          self.toFuture
       }
     }
 }
 
 object Result {
 
-  final case class Attempt[+E <: Throwable, +A] private[example] (future: Future[A]) extends Result[E, A] {
+  private final case class Attempt[+E <: Throwable, +A] private (future: Future[A]) extends Result[E, A] {
     override def toFuture: Future[A] = future
   }
 
-  private final case class Success[+A] private[example] (success: A) extends Result[Nothing, A] {
+  private final case class Success[+A] private (success: A) extends Result[Nothing, A] {
     override def toFuture: Future[A] = Future.successful(success)
   }
 
-  private final case class Failed[+E <: Exception] private[example] (failure: E) extends Result[E, Nothing] {
+  private final case class Failed[+E <: Exception] private (failure: E) extends Result[E, Nothing] {
     override def toFuture: Future[Nothing] = Future.failed(failure)
   }
 
-  private final case class Fatal[+E <: Throwable] private[example] (failure: E) extends Result[Nothing, Nothing] {
-    override def toFuture: Future[Nothing] = Future.failed(failure)
+  private final case class Fatal private (failure: Throwable) extends Result[FatalError, Nothing] {
+    override def toFuture: Future[Nothing] = Future.failed(FatalError(failure))
   }
 
   private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply _
 
-  private[example] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
+  private[result] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
     _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
 
   def unapply[E <: Throwable, A](result: Result[E, A]): Option[Future[A]] =
     Some(result.toFuture)
 
-  private[example] def apply[E <: Throwable, A](future: Future[A]): Result[E, A] =
+  private def apply[E <: Throwable, A](future: Future[A]): Result[E, A] =
     Attempt(future)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): Result[Throwable, A] =
@@ -101,10 +102,10 @@ object Result {
   final def succeed[A](value: A): Result[Nothing, A] =
     Success(value)
 
-  final def failed[E <: Exception](exception: E): Result[E, Nothing] =
+  final def fail[E <: Exception](exception: E): Result[E, Nothing] =
     Failed(exception)
 
-  final def fatal[E <: Throwable](exception: E): Result[Nothing, Nothing] =
+  final def fatal(exception: Throwable): Result[FatalError, Nothing] =
     Fatal(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[Result[E, A]])(implicit
