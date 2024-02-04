@@ -3,6 +3,7 @@ package dev.ragz.result
 import munit.FunSuite
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class ResultSpec extends FunSuite {
 
@@ -29,7 +30,7 @@ class ResultSpec extends FunSuite {
     for {
       a <- Result.fromFuture(Future(1))
       b <- Result.fromFuture(Future(2))
-      c <- Result.fromFuture(Future(3))
+      c <- Result.fromTry(Try(3))
     } yield assertEquals(a + b + c, 6)
   }
   test("Result using flatmap with typed errors") {
