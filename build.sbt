@@ -9,7 +9,7 @@ lazy val root =
   project
     .in(file("."))
     .settings(publish / skip := true)
-    .aggregate(result)
+    .aggregate(result, benchmark)
 
 
 lazy val result = module("result", "result")
@@ -19,6 +19,15 @@ lazy val result = module("result", "result")
     libraryDependencies += munit % Test
   )
   .settings(stdSettings("result"))
+
+lazy val benchmark = module("scala-result-benchmark", "benchmark")
+  .enablePlugins(BuildInfoPlugin)
+  .settings(buildInfoSettings("com.example"))
+  .settings(
+    libraryDependencies += munit % Test
+  )
+  .settings(stdSettings("scala-result-benchmark"))
+  .dependsOn(result)
 
 
 def module(moduleName: String, fileName: String): Project =
