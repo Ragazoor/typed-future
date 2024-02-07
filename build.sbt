@@ -21,7 +21,7 @@ lazy val result = module("result", "result")
   .settings(stdSettings("result"))
 
 lazy val benchmark = module("scala-result-benchmark", "benchmark")
-  .enablePlugins(BuildInfoPlugin)
+  .enablePlugins(BuildInfoPlugin, JmhPlugin)
   .settings(buildInfoSettings("com.example"))
   .settings(
     libraryDependencies += munit % Test

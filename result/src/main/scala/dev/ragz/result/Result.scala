@@ -1,23 +1,32 @@
 package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Try }
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 trait Result[+E <: Throwable, +A] {
   self =>
   def toFuture: Future[A]
 
-  def map[B](f: A => B)(implicit ec: ExecutionContext): Result[E, B] =
-    self.flatMap(a => Result.succeed(f(a)))(ec)
+  def value: Option[Try[A]] = self.toFuture.value
 
-  def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] =
+  def map[B](f: A => B)(implicit ec: ExecutionContext): Result[E, B] =
+    Result.succeed(self.toFuture.transform(_ map f))
+
+  def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] = {
+    Result.fromFuture(self.toFuture.transformWith {
+        t =>
+          if (t.isInstanceOf[Success[A]]) f(t.asInstanceOf[Success[A]].value)
+          else this.asInstanceOf[Success[B]] // Safe cast
+      }
+    )
     Result[E2, B] {
       for {
         a <- self.toFuture
         b <- f(a).toFuture
       } yield b
     }
+  }
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Result[E2, B]): Result[E2, B] =
     flatMap(ev)(parasitic)
