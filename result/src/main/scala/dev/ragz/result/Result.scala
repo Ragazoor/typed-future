@@ -11,22 +11,13 @@ trait Result[+E <: Throwable, +A] {
   def value: Option[Try[A]] = self.toFuture.value
 
   def map[B](f: A => B)(implicit ec: ExecutionContext): Result[E, B] =
-    Result.succeed(self.toFuture.transform(_ map f))
+    Result(self.toFuture.transform(_ map f))
 
-  def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] = {
-    Result.fromFuture(self.toFuture.transformWith {
-        t =>
-          if (t.isInstanceOf[Success[A]]) f(t.asInstanceOf[Success[A]].value)
-          else this.asInstanceOf[Success[B]] // Safe cast
-      }
-    )
-    Result[E2, B] {
-      for {
-        a <- self.toFuture
-        b <- f(a).toFuture
-      } yield b
-    }
-  }
+  def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] =
+    Result(self.toFuture.transformWith {
+      case value1: Success[A] => f(value1.value).toFuture
+      case _ => this.asInstanceOf[Future[B]]
+    })
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Result[E2, B]): Result[E2, B] =
     flatMap(ev)(parasitic)
