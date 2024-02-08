@@ -8,16 +8,13 @@ trait Result[+E <: Throwable, +A] {
   self =>
   def toFuture: Future[A]
 
+  def value: Option[Try[A]] = self.toFuture.value
+
   def map[B](f: A => B)(implicit ec: ExecutionContext): Result[E, B] =
-    self.flatMap(a => Result.succeed(f(a)))(ec)
+    Result(self.toFuture.transform(_ map f))
 
   def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] =
-    Result[E2, B] {
-      for {
-        a <- self.toFuture
-        b <- f(a).toFuture
-      } yield b
-    }
+    Result(self.toFuture.flatMap(f(_).toFuture))
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Result[E2, B]): Result[E2, B] =
     flatMap(ev)(parasitic)
