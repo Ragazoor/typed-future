@@ -1,8 +1,8 @@
 package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Try }
 
 trait Result[+E <: Throwable, +A] {
   self =>
@@ -14,10 +14,7 @@ trait Result[+E <: Throwable, +A] {
     Result(self.toFuture.transform(_ map f))
 
   def flatMap[E2 >: E <: Throwable, B](f: A => Result[E2, B])(implicit ec: ExecutionContext): Result[E2, B] =
-    Result(self.toFuture.transformWith {
-      case value1: Success[A] => f(value1.value).toFuture
-      case _ => this.asInstanceOf[Future[B]]
-    })
+    Result(self.toFuture.flatMap(f(_).toFuture))
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Result[E2, B]): Result[E2, B] =
     flatMap(ev)(parasitic)
