@@ -28,25 +28,27 @@ class FutureSpec extends FunSuite {
 
   test("Typed Future using flatmap") {
     for {
-      a <- Future.fromFuture(StdFuture(1))
+      a <- Future(1)
       b <- Future.fromFuture(StdFuture(2))
       c <- Future.fromTry(Try(3))
-    } yield assertEquals(a + b + c, 6)
+      d <- Future.fromEither(Right(4))
+    } yield assertEquals(a + b + c + d, 10)
   }
+
   test("Typed Future using flatmap with typed errors") {
     val a = for {
-      a <- Future.fromFuture(StdFuture(1))
-      b <- Future.fromFuture(StdFuture(2))
-      _ <- Future.fail(MyError(new RuntimeException("test message")))
+      a <- Future(1)
+      b <- Future(2)
+      _ <- Future.failed(MyError(new RuntimeException("test message")))
     } yield assertEquals(a + b, 3)
     a.catchSome {
-      case _: RuntimeException => Future.succeed(assert(false))
-      case _: MyError          => Future.succeed(assert(true))
+      case _: RuntimeException => Future.successful(assert(false))
+      case _: MyError          => Future.successful(assert(true))
     }
   }
-  test("Typed Future using sequence") {
-    def getResult(i: Int) = Future.fromFuture(StdFuture(i))
 
+  test("Typed Future using sequence") {
+    def getResult(i: Int) = Future(i)
     Future
       .sequence(Seq(1, 2, 3).map(getResult))
       .map(_.sum)
@@ -56,22 +58,22 @@ class FutureSpec extends FunSuite {
   test("Typed Future fail with typed error") {
     def getResult(i: Int) =
       if (i < 2)
-        Future.succeed(i)
+        Future.successful(i)
       else
-        Future.fail(new IllegalArgumentException("test message"))
+        Future.failed(new IllegalArgumentException("test message"))
 
     Future
       .sequence(Seq(1, 2, 3).map(getResult))
       .catchSome { case _: IllegalArgumentException =>
-        Future.succeed(assert(true))
+        Future.successful(assert(true))
       }
   }
 
   test("Typed Future using flatten") {
-    val result1 = Future.fromFuture(StdFuture(1))
-    val result2 = Future.fromFuture(StdFuture(result1))
+    val result1 = Future(1)
+    val result2 = Future(result1)
     result2.flatten.catchSome { case _: IllegalArgumentException =>
-      Future.succeed(assert(true))
+      Future.successful(assert(true))
     }
   }
 
@@ -82,10 +84,9 @@ class FutureSpec extends FunSuite {
 
   test("Typed Future can fail using apply") {
     def failingFunc(): Unit = throw new RuntimeException("test message")
-
     val result = Future[Unit](failingFunc()).mapError(MyError)
     result.catchSome { case _: MyError =>
-      Future.succeed(assert(true))
+      Future.successful(assert(true))
     }
   }
 
@@ -99,11 +100,11 @@ class FutureSpec extends FunSuite {
 
   test("Typed Future catchAll") {
     val a = for {
-      a <- Future.fail(MyError2(new IllegalArgumentException("Bad argument")))
-      _ <- Future.fail(MyError(new RuntimeException("test message")))
+      a <- Future.failed(MyError2(new IllegalArgumentException("Bad argument")))
+      _ <- Future.failed(MyError(new RuntimeException("test message")))
     } yield assertEquals(a, -1)
     a.catchAll { _ =>
-      Future.succeed(assert(true))
+      Future.successful(assert(true))
     }
   }
 
@@ -112,7 +113,7 @@ class FutureSpec extends FunSuite {
       _ <- Future.fatal(MyError(new IllegalArgumentException("Bad argument")))
     } yield assert(false)
     a.catchAll { _ =>
-      Future.succeed(assert(false))
+      Future.successful(assert(false))
     }.toFuture.recover { case _: FatalError =>
       assert(true)
     }

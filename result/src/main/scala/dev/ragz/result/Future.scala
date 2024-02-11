@@ -1,8 +1,8 @@
 package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
-import scala.util.{Failure, Try}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
+import scala.util.{ Failure, Try }
 
 trait Future[+E <: Throwable, +A] {
   self =>
@@ -31,12 +31,12 @@ trait Future[+E <: Throwable, +A] {
     zipWith(that)(Future.zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: Future[E2, U])(f: (A, U) => R)(implicit
-                                                                               ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[E2, R] =
-    Future(toFuture.zipWith(that.toFuture)(f))
+    Future(self.toFuture.zipWith(that.toFuture)(f))
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Future[E2, A2])(implicit
-                                                                      ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[E2, A2] =
     Future[E2, A2] {
       self.toFuture.transformWith {
@@ -46,7 +46,7 @@ trait Future[+E <: Throwable, +A] {
     }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Future[E2, A2]])(implicit
-                                                                                       ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[E2, A2] =
     Future[E2, A2] {
       self.toFuture.transformWith {
@@ -93,20 +93,23 @@ object Future {
   final def fromFuture[A](future: StdFuture[A]): Future[Throwable, A] =
     Future(future)
 
+  final def fromEither[E <: Throwable, A](either: Either[E, A]): Future[E, A] =
+    Future(StdFuture.fromTry(either.toTry))
+
   final def fromTry[A](body: Try[A]): Future[Throwable, A] =
     Future[Throwable, A](StdFuture.fromTry(body))
 
-  final def succeed[A](value: A): Future[Nothing, A] =
+  final def successful[A](value: A): Future[Nothing, A] =
     Success(value)
 
-  final def fail[E <: Exception](exception: E): Future[E, Nothing] =
+  final def failed[E <: Exception](exception: E): Future[E, Nothing] =
     Failed(exception)
 
   final def fatal(exception: Throwable): Future[FatalError, Nothing] =
     Fatal(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[Future[E, A]])(implicit
-                                                                    ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[E, Seq[A]] =
     Attempt(StdFuture.sequence(results.map(_.toFuture)))
 

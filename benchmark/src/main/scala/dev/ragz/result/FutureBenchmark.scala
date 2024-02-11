@@ -31,7 +31,7 @@ class FutureBenchmark {
     await(StdFuture.sequence(input.map(StdFuture.successful)))
 
   @Benchmark def resultSequence: Boolean =
-    await(Future.sequence(input.map(Future.succeed)))
+    await(Future.sequence(input.map(Future.successful)))
 
   @tailrec private[this] final def futureFlatMapRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -45,11 +45,11 @@ class FutureBenchmark {
   @tailrec private[this] final def resultFlatMapRec(i: Int, f: Future[Nothing, Int])(implicit
                                                                                      ec: ExecutionContext
   ): Future[Nothing, Int] =
-    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Future.succeed)(ec))(ec)
+    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Future.successful)(ec))(ec)
     else f
 
   @Benchmark final def resultFlatMap: Boolean =
-    await(resultFlatMapRec(recursion, Future.succeed(1)))
+    await(resultFlatMapRec(recursion, Future.successful(1)))
 
   @tailrec private[this] final def futureMapRec(i: Int, f: StdFuture[Int])(implicit ec: ExecutionContext): StdFuture[Int] =
     if (i > 0) futureMapRec(i - 1, f.map(identity)(ec))(ec)
@@ -65,7 +65,7 @@ class FutureBenchmark {
     else f
 
   @Benchmark final def resultMap: Boolean =
-    await(resultMapRec(recursion, Future.succeed(1)))
+    await(resultMapRec(recursion, Future.successful(1)))
 
   @tailrec private[this] final def futureRecoverWithRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -83,5 +83,5 @@ class FutureBenchmark {
     await(futureRecoverWithRec(recursion, StdFuture.failed[Int](new RuntimeException("Future error"))))
 
   @Benchmark final def resultMapError: Boolean =
-    await(resultMapErrorRec(recursion, Future.fail(new RuntimeException("Result error"))))
+    await(resultMapErrorRec(recursion, Future.failed(new RuntimeException("Result error"))))
 }
