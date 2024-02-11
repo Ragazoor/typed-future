@@ -2,7 +2,7 @@ package dev.ragz.result
 
 import munit.FunSuite
 
-class ResultNonFatalSpec extends FunSuite {
+class FutureNonFatalSpec extends FunSuite {
   case class MyError(e: Throwable) extends ResultErrors(e.getMessage, e)
   test("MyError is non fatal") {
     val e = new RuntimeException("test message")
