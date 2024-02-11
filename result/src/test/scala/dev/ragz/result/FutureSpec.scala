@@ -49,6 +49,7 @@ class FutureSpec extends FunSuite {
 
   test("Typed Future using sequence") {
     def getResult(i: Int) = Future(i)
+
     Future
       .sequence(Seq(1, 2, 3).map(getResult))
       .map(_.sum)
@@ -69,6 +70,12 @@ class FutureSpec extends FunSuite {
       }
   }
 
+  test("Typed Future.fromEither fail with typed error") {
+    Future.fromEither(Left(new RuntimeException("Test message"))).catchSome { case _: RuntimeException =>
+      Future.successful(assert(true))
+    }
+  }
+
   test("Typed Future using flatten") {
     val result1 = Future(1)
     val result2 = Future(result1)
@@ -84,6 +91,7 @@ class FutureSpec extends FunSuite {
 
   test("Typed Future can fail using apply") {
     def failingFunc(): Unit = throw new RuntimeException("test message")
+
     val result = Future[Unit](failingFunc()).mapError(MyError)
     result.catchSome { case _: MyError =>
       Future.successful(assert(true))
@@ -106,6 +114,17 @@ class FutureSpec extends FunSuite {
     a.catchAll { _ =>
       Future.successful(assert(true))
     }
+  }
+
+  test("CatchSome does not catch errors not specified") {
+    Future
+      .failed(new RuntimeException("Test message"))
+      .catchSome { case _: IllegalArgumentException =>
+        Future.successful(assert(false))
+      }
+      .catchSome { case _: RuntimeException =>
+        Future.successful(assert(true))
+      }
   }
 
   test("Typed Future cannot catch fatal errors") {
