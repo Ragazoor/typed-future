@@ -76,7 +76,7 @@ object Future {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(FatalError(failure))
   }
 
-  private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply _
+  private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply
 
   private[result] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
     _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
@@ -84,7 +84,7 @@ object Future {
   def unapply[E <: Throwable, A](result: Future[E, A]): Option[StdFuture[A]] =
     Some(result.toFuture)
 
-  private def apply[E <: Throwable, A](future: StdFuture[A]): Future[E, A] =
+  private final def apply[E <: Throwable, A](future: StdFuture[A]): Future[E, A] =
     Attempt(future)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): Future[Throwable, A] =
