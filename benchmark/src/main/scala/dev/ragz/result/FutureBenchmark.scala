@@ -17,13 +17,13 @@ class FutureBenchmark {
 
   protected final def await[T](fut: StdFuture[T]): Boolean = {
     var r: Option[Try[T]] = None
-    do r = fut.value while (r eq None);
+    while (r eq None) r = fut.value
     r.get.isInstanceOf[Success[T]]
   }
 
   protected final def await[E <: Throwable, T](result: Future[E, T]): Boolean = {
     var r: Option[Try[T]] = None
-    do r = result.value while (r eq None);
+    while (r eq None) r = result.value
     r.get.isInstanceOf[Success[T]]
   }
 
@@ -43,7 +43,7 @@ class FutureBenchmark {
     await(futureFlatMapRec(recursion, StdFuture.successful(1)))
 
   @tailrec private[this] final def resultFlatMapRec(i: Int, f: Future[Nothing, Int])(implicit
-                                                                                     ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[Nothing, Int] =
     if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Future.successful)(ec))(ec)
     else f
@@ -51,7 +51,9 @@ class FutureBenchmark {
   @Benchmark final def resultFlatMap: Boolean =
     await(resultFlatMapRec(recursion, Future.successful(1)))
 
-  @tailrec private[this] final def futureMapRec(i: Int, f: StdFuture[Int])(implicit ec: ExecutionContext): StdFuture[Int] =
+  @tailrec private[this] final def futureMapRec(i: Int, f: StdFuture[Int])(implicit
+    ec: ExecutionContext
+  ): StdFuture[Int] =
     if (i > 0) futureMapRec(i - 1, f.map(identity)(ec))(ec)
     else f
 
@@ -59,7 +61,7 @@ class FutureBenchmark {
     await(futureMapRec(recursion, StdFuture.successful(1)))
 
   @tailrec private[this] final def resultMapRec(i: Int, f: Future[Nothing, Int])(implicit
-                                                                                 ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[Nothing, Int] =
     if (i > 0) resultMapRec(i - 1, f.map(identity)(ec))(ec)
     else f
@@ -74,7 +76,7 @@ class FutureBenchmark {
     else f
 
   @tailrec private[this] final def resultMapErrorRec(i: Int, f: Future[RuntimeException, Int])(implicit
-                                                                                               ec: ExecutionContext
+    ec: ExecutionContext
   ): Future[RuntimeException, Int] =
     if (i > 0) resultMapErrorRec(i - 1, f.mapError(identity)(ec))(ec)
     else f

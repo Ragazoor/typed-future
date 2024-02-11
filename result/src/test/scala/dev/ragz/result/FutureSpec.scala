@@ -92,7 +92,7 @@ class FutureSpec extends FunSuite {
   test("Typed Future can fail using apply") {
     def failingFunc(): Unit = throw new RuntimeException("test message")
 
-    val result = Future[Unit](failingFunc()).mapError(MyError)
+    val result = Future[Unit](failingFunc()).mapError(MyError.apply)
     result.catchSome { case _: MyError =>
       Future.successful(assert(true))
     }

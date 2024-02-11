@@ -1,13 +1,12 @@
 import sbt.Keys._
-import sbt.{CrossVersion, ThisBuild}
+import sbt.{ CrossVersion, ThisBuild }
 import sbtbuildinfo.BuildInfoKeys._
 import sbtbuildinfo._
-
 
 object BuildHelper {
   private val Scala212 = "2.12.18"
   private val Scala213 = "2.13.12"
-  private val Scala3 = "3.3.1"
+  private val Scala3   = "3.3.1"
 
   private val stdOptions     = Seq(
     "-encoding",
@@ -58,7 +57,7 @@ object BuildHelper {
 
   private def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
-      case Some((3, _)) => stdOpts3 ++ stdOpts213And3
+      case Some((3, _))  => stdOpts3 ++ stdOpts213And3
       case Some((2, 13)) => stdOpts213 ++ stdOpts213And3
       case Some((2, 12)) =>
         Seq(
@@ -69,10 +68,9 @@ object BuildHelper {
           "-opt:l:inline",
           "-opt-inline-from:<source>"
         ) ++ stdOptsUpto212
-      case _ =>
+      case _             =>
         Seq("-Xexperimental") ++ stdOptsUpto212
     }
-
 
   def buildInfoSettings(packageName: String) =
     Seq(
@@ -83,10 +81,10 @@ object BuildHelper {
 
   def stdSettings(prjName: String) =
     Seq(
-      name := s"$prjName",
-      crossScalaVersions := Seq(Scala212, Scala213, Scala3),
+      name                     := s"$prjName",
+      crossScalaVersions       := Seq(Scala212, Scala213, Scala3),
       ThisBuild / scalaVersion := Scala213,
-      scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
+      scalacOptions            := stdOptions ++ extraOptions(scalaVersion.value),
       incOptions ~= (_.withLogRecompileOnMacro(false))
     )
 }

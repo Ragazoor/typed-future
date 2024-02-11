@@ -60,19 +60,19 @@ trait Future[+E <: Throwable, +A] {
 
 object Future {
 
-  private final case class Attempt[+E <: Throwable, +A] private (future: StdFuture[A]) extends Future[E, A] {
+  private final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends Future[E, A] {
     override def toFuture: StdFuture[A] = future
   }
 
-  private final case class Success[+A] private (success: A) extends Future[Nothing, A] {
+  private final case class Success[+A](success: A) extends Future[Nothing, A] {
     override def toFuture: StdFuture[A] = StdFuture.successful(success)
   }
 
-  private final case class Failed[+E <: Exception] private (failure: E) extends Future[E, Nothing] {
+  private final case class Failed[+E <: Exception](failure: E) extends Future[E, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
   }
 
-  private final case class Fatal private (failure: Throwable) extends Future[FatalError, Nothing] {
+  private final case class Fatal(failure: Throwable) extends Future[FatalError, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(FatalError(failure))
   }
 
@@ -85,7 +85,7 @@ object Future {
     Some(result.toFuture)
 
   private final def apply[E <: Throwable, A](future: StdFuture[A]): Future[E, A] =
-    Attempt(future)
+    Attempt[E, A](future)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): Future[Throwable, A] =
     Future[Throwable, A](StdFuture(body))
@@ -100,10 +100,10 @@ object Future {
     Future[Throwable, A](StdFuture.fromTry(body))
 
   final def successful[A](value: A): Future[Nothing, A] =
-    Success(value)
+    Success[A](value)
 
   final def failed[E <: Exception](exception: E): Future[E, Nothing] =
-    Failed(exception)
+    Failed[E](exception)
 
   final def fatal(exception: Throwable): Future[FatalError, Nothing] =
     Fatal(exception)
@@ -111,6 +111,6 @@ object Future {
   final def sequence[E <: Throwable, A](results: Seq[Future[E, A]])(implicit
     ec: ExecutionContext
   ): Future[E, Seq[A]] =
-    Attempt(StdFuture.sequence(results.map(_.toFuture)))
+    Future(StdFuture.sequence(results.map(_.toFuture)))
 
 }
