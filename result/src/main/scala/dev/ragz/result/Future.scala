@@ -1,8 +1,10 @@
 package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.{ ExecutionContext, Future => StdFuture }
-import scala.util.{ Failure, Try }
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ CanAwait, ExecutionContext, Future => StdFuture }
+import scala.util.control.NoStackTrace
+import scala.util.{ Failure, Success, Try }
 
 trait Future[+E <: Throwable, +A] {
   self =>
@@ -56,6 +58,45 @@ trait Future[+E <: Throwable, +A] {
           self.toFuture
       }
     }
+  private final val failedFailure                                           =
+    Failure[Nothing](
+      new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
+    )
+
+  private final def failedFun[B](v: Try[B]): Try[E] =
+    if (v.isInstanceOf[Failure[Any]]) Success(v.asInstanceOf[Failure[E]].exception.asInstanceOf[E])
+    else failedFailure
+
+  def failed: Future[NoSuchElementException, E] =
+    transform(failedFun)(parasitic).asInstanceOf[Future[NoSuchElementException, E]]
+
+  def foreach[U](f: A => U)(implicit executor: ExecutionContext): Unit =
+    onComplete(_ foreach f)
+
+  def onComplete[B](f: Try[A] => B)(implicit executor: ExecutionContext): Unit =
+    self.toFuture.onComplete(f)
+
+  def isCompleted: Boolean = self.toFuture.isCompleted
+
+  def transform[B](f: Try[A] => Try[B])(implicit executor: ExecutionContext): Future[Throwable, B] =
+    Future(self.toFuture.transform(f))
+
+  def transformWith[E2 >: E <: Throwable, B](f: Try[A] => Future[E2, B])(implicit
+    executor: ExecutionContext
+  ): Future[E2, B] =
+    Future(self.toFuture.transformWith(f(_).toFuture))
+
+//  @throws(classOf[TimeoutException])
+//  @throws(classOf[InterruptedException])
+  def ready(atMost: Duration)(implicit permit: CanAwait): this.type  = {
+    self.toFuture.ready(atMost)
+    this
+  }
+
+//  @throws(classOf[TimeoutException])
+//  @throws(classOf[InterruptedException])
+  def result(atMost: Duration)(implicit permit: CanAwait): A =
+    self.toFuture.result(atMost)
 }
 
 object Future {

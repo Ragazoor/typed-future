@@ -137,4 +137,15 @@ class FutureSpec extends FunSuite {
       assert(true)
     }
   }
+
+  test("Typed Future cannot catch fatal errors") {
+    val a = for {
+      _ <- Future.fatal(MyError(new IllegalArgumentException("Bad argument")))
+    } yield assert(false)
+    a.catchAll { _ =>
+      Future.successful(assert(false))
+    }.toFuture.recover { case _: FatalError =>
+      assert(true)
+    }
+  }
 }
