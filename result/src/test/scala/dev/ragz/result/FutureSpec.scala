@@ -148,4 +148,28 @@ class FutureSpec extends FunSuite {
       assert(true)
     }
   }
+
+  test("Future.failed returns error") {
+    val a = Future.failed(new IllegalArgumentException("Bad argument")).failed
+    a.map { e => assertEquals(e.getMessage, "Bad argument")}
+   }
+
+  test("Future.failed fails with NoSuchElementException if it is a success") {
+    val a = Future.successful(1).failed
+    a.map { _ => assert(false)}
+    .catchSome {
+      case _: NoSuchElementException => Future.successful(assert(true))
+    }
+   }
+
+  test("Future.failed fails with FatalError if it contains a FatalError") {
+    val a = Future.fatal(new RuntimeException("Test message")).failed
+    a.map { _ => assert(false)}
+    .catchSome {
+      case _: NoSuchElementException => Future.successful(assert(false))
+    }
+    .toFuture.recover {
+      case _: FatalError => assert(true)
+    }
+   }
 }

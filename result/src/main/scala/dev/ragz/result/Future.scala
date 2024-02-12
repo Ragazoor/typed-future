@@ -64,11 +64,16 @@ trait Future[+E <: Throwable, +A] {
     )
 
   private final def failedFun[B](v: Try[B]): Try[E] =
-    if (v.isInstanceOf[Failure[Any]]) Success(v.asInstanceOf[Failure[E]].exception.asInstanceOf[E])
-    else failedFailure
+    v match {
+      case Failure(e) if ResultNonFatal(e) => Success(e.asInstanceOf[E])
+      case Failure(exception) => Failure(exception)
+      case Success(_) =>failedFailure
+    }  
 
-  def failed: Future[NoSuchElementException, E] =
-    transform(failedFun)(parasitic).asInstanceOf[Future[NoSuchElementException, E]]
+  type FutureFailedException = NoSuchElementException with FatalErrorT
+
+  def failed: Future[FutureFailedException, E] =
+    transform(failedFun)(parasitic).asInstanceOf[Future[FutureFailedException, E]]
 
   def foreach[U](f: A => U)(implicit executor: ExecutionContext): Unit =
     onComplete(_ foreach f)

@@ -2,7 +2,8 @@ package dev.ragz.result
 
 abstract class ResultErrors(msg: String, cause: Throwable) extends Exception(msg, cause)
 
-case class FatalError(msg: String, e: Throwable) extends ResultErrors(msg, e)
+trait FatalErrorT
+case class FatalError(msg: String, e: Throwable) extends ResultErrors(msg, e) with FatalErrorT
 
 object FatalError {
   def apply(e: Throwable): FatalError = FatalError(e.getMessage, e)
