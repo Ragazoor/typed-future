@@ -64,7 +64,7 @@ trait Future[+E <: Throwable, +A] {
     )
 
   private final def failedFun[B](v: Try[B]): Try[E] =
-    if (v.isInstanceOf[Failure[E]]) Success(v.asInstanceOf[Failure[E]].exception.asInstanceOf[E])
+    if (v.isInstanceOf[Failure[Any]]) Success(v.asInstanceOf[Failure[E]].exception.asInstanceOf[E])
     else failedFailure
 
   def failed: Future[NoSuchElementException, E] =
@@ -88,8 +88,10 @@ trait Future[+E <: Throwable, +A] {
 
 //  @throws(classOf[TimeoutException])
 //  @throws(classOf[InterruptedException])
-  def ready(atMost: Duration)(implicit permit: CanAwait): this.type =
-    Future.successful(result(atMost))
+  def ready(atMost: Duration)(implicit permit: CanAwait): this.type  = {
+    self.toFuture.ready(atMost)
+    this
+  }
 
 //  @throws(classOf[TimeoutException])
 //  @throws(classOf[InterruptedException])
@@ -99,7 +101,7 @@ trait Future[+E <: Throwable, +A] {
 
 object Future {
 
-  private final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends Future[E, A] with StdFuture[A] {
+  private final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends Future[E, A] {
     override def toFuture: StdFuture[A] = future
   }
 
