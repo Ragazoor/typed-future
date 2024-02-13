@@ -1,5 +1,7 @@
 package dev.ragz.result
 
+import dev.ragz.result.FutureFailedException.FutureFailedException
+
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ CanAwait, ExecutionContext, Future => StdFuture }
@@ -69,8 +71,6 @@ trait Future[+E <: Throwable, +A] {
       case Failure(exception)        => Failure(exception)
       case Success(_)                => failedFailure
     }
-
-  type FutureFailedException = NoSuchElementException with FatalError
 
   def failed: Future[FutureFailedException, E] =
     transform(failedFun)(parasitic).asInstanceOf[Future[FutureFailedException, E]]
