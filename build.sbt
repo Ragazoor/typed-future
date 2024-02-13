@@ -1,9 +1,8 @@
 import Dependencies._
 import BuildHelper._
 
-ThisBuild / version          := "0.1.0-SNAPSHOT"
-ThisBuild / organization     := "com.example"
-ThisBuild / organizationName := "ragz"
+ThisBuild / version      := "0.1.0-SNAPSHOT"
+ThisBuild / organization := "dev.ragz"
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
@@ -16,13 +15,13 @@ lazy val root =
 
 lazy val result = module("result", "result")
   .enablePlugins(BuildInfoPlugin)
-  .settings(buildInfoSettings("com.example"))
+  .settings(buildInfoSettings("dev.ragz"))
   .settings(libraryDependencies += munit % Test)
   .settings(stdSettings("result"))
 
 lazy val benchmark = module("scala-result-benchmark", "benchmark")
   .enablePlugins(BuildInfoPlugin, JmhPlugin)
-  .settings(buildInfoSettings("com.example"))
+  .settings(buildInfoSettings("dev.ragz"))
   .settings(libraryDependencies += munit % Test)
   .settings(stdSettings("scala-result-benchmark"))
   .dependsOn(result)
