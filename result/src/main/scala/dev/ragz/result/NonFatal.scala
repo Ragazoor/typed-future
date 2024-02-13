@@ -1,16 +1,16 @@
 package dev.ragz.result
 
-import scala.util.control.NonFatal
+import scala.util.control
 
-object ResultNonFatal {
+object NonFatal {
 
   /**
    * Returns true if the provided `Throwable` is to be considered non-fatal, or false if it is to be considered fatal
    */
   def apply(t: Throwable): Boolean = t match {
-    case _: FatalError    => false
-    case e if NonFatal(e) => true
-    case _                => false
+    case _: FatalError            => false
+    case e if control.NonFatal(e) => true
+    case _                        => false
   }
 
   /**

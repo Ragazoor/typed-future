@@ -3,27 +3,28 @@ package dev.ragz.result
 import munit.FunSuite
 
 class FutureNonFatalSpec extends FunSuite {
-  case class MyError(e: Throwable) extends ResultErrors(e.getMessage, e)
+  case class MyError(e: Throwable) extends Throwable(e.getMessage, e)
+
   test("MyError is non fatal") {
     val e = new RuntimeException("test message")
-    assert(ResultNonFatal(e))
+    assert(NonFatal(e))
   }
 
   test("MyError is non fatal") {
     val e = new RuntimeException("test message")
     val myError = MyError(e)
-    assert(ResultNonFatal(myError))
+    assert(NonFatal(myError))
   }
 
   test("FatalError is fatal") {
     val e = new RuntimeException("test message")
     val fatalError = FatalError(e)
-    assert(!ResultNonFatal(fatalError))
+    assert(!NonFatal(fatalError))
   }
 
   test("InterruptedException is fatal") {
     val fatalError = new InterruptedException("test message")
-    assert(!ResultNonFatal(fatalError))
+    assert(!NonFatal(fatalError))
   }
 
 }
