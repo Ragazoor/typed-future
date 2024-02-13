@@ -2,9 +2,9 @@ package dev.ragz.result
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{CanAwait, ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ CanAwait, ExecutionContext, Future => StdFuture }
 import scala.util.control.NoStackTrace
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 trait Future[+E <: Throwable, +A] {
   self =>
@@ -43,7 +43,7 @@ trait Future[+E <: Throwable, +A] {
     Future[E2, A2] {
       self.toFuture.transformWith {
         case Failure(e) if NonFatal(e) => f(e.asInstanceOf[E]).toFuture
-        case _                               => self.toFuture
+        case _                         => self.toFuture
       }
     }
 
@@ -54,7 +54,7 @@ trait Future[+E <: Throwable, +A] {
       self.toFuture.transformWith {
         case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
           pf(e.asInstanceOf[E]).toFuture
-        case _                                                                    =>
+        case _                                                              =>
           self.toFuture
       }
     }
@@ -66,8 +66,8 @@ trait Future[+E <: Throwable, +A] {
   private final def failedFun[B](v: Try[B]): Try[E] =
     v match {
       case Failure(e) if NonFatal(e) => Success(e.asInstanceOf[E])
-      case Failure(exception)              => Failure(exception)
-      case Success(_)                      => failedFailure
+      case Failure(exception)        => Failure(exception)
+      case Success(_)                => failedFailure
     }
 
   type FutureFailedException = NoSuchElementException with FatalError

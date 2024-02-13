@@ -11,13 +11,13 @@ class FutureNonFatalSpec extends FunSuite {
   }
 
   test("MyError is non fatal") {
-    val e = new RuntimeException("test message")
+    val e       = new RuntimeException("test message")
     val myError = MyError(e)
     assert(NonFatal(myError))
   }
 
   test("FatalError is fatal") {
-    val e = new RuntimeException("test message")
+    val e          = new RuntimeException("test message")
     val fatalError = FatalError(e)
     assert(!NonFatal(fatalError))
   }
