@@ -4,9 +4,9 @@ import dev.ragz.result.FutureFailedException.FutureFailedException
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
 import scala.util.control.NoStackTrace
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 trait Future[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
