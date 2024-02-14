@@ -1,6 +1,6 @@
-package dev.ragz.result
+package dev.ragz.future
 
-import dev.ragz.result.FutureFailedException.FutureFailedException
+import dev.ragz.future.FutureFailedException.FutureFailedException
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
@@ -124,7 +124,7 @@ object Future {
 
   private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply
 
-  private[result] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
+  private[future] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
     _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
 
   def unapply[E <: Throwable, A](result: Future[E, A]): Option[StdFuture[A]] =

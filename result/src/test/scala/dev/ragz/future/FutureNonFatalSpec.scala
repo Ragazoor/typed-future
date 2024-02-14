@@ -1,4 +1,4 @@
-package dev.ragz.result
+package dev.ragz.future
 
 import munit.FunSuite
 
