@@ -12,8 +12,8 @@ import scala.util.{ Success, Try }
 @Threads(value = 1)
 class FutureBenchmark {
   private val size        = 1_000_000
-  protected val recursion = 100_000
-  protected val input     = 1 to size
+  private val recursion = 100_000
+  private val input     = 1 to size
 
   protected final def await[T](fut: StdFuture[T]): Boolean = {
     var r: Option[Try[T]] = None

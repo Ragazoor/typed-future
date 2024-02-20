@@ -19,11 +19,11 @@ lazy val result = module("result", "result")
   .settings(libraryDependencies += munit % Test)
   .settings(stdSettings("result"))
 
-lazy val benchmark = module("scala-result-benchmark", "benchmark")
+lazy val benchmark = module("benchmark", "benchmark")
   .enablePlugins(BuildInfoPlugin, JmhPlugin)
   .settings(buildInfoSettings("dev.ragz"))
   .settings(libraryDependencies += munit % Test)
-  .settings(stdSettings("scala-result-benchmark"))
+  .settings(stdSettings("benchmark"))
   .dependsOn(result)
 
 def module(moduleName: String, fileName: String): Project =
