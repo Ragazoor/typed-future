@@ -1,7 +1,12 @@
 # scala-result
 
 ## The Future of futures 
-
+```scala
+def foo(a: Int): Future[Int]
+```
+This is a very common sight in any scala program. Defines a 
+function `foo` which returns a `Future` that can either succeed 
+with an integer or fail with a `Throwable`.
 
 Compile and or run test
 
