@@ -133,7 +133,7 @@ class ResultSpec extends FunSuite {
     } yield assert(false)
     a.catchAll { _ =>
       Result.successful(assert(false))
-    }.untyped.recover { case _: FatalError =>
+    }.toFuture.recover { case _: FatalError =>
       assert(true)
     }
   }
@@ -163,7 +163,7 @@ class ResultSpec extends FunSuite {
       .catchSome { case _: NoSuchElementException =>
         Result.successful(assert(false))
       }
-      .untyped
+      .toFuture
       .recover { case _: FatalError =>
         assert(true)
       }
