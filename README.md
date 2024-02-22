@@ -1,12 +1,23 @@
-# scala-result
+# Typed Futures
+Designed to be a drop in replacement for `scala.concurrent.Future`, 
+built entirely on top of `scala.concurrent.Future` but with typed Errors,
+with effortless integration.
 
-## The Future of futures 
+# Installation
+
+Setup via `build.sbt`:
+
+```sbt
+libraryDependencies += "dev.ragz" %% "typed-future" % "0.1.0"
+```
+
+# Getting Started
 ```scala
 def foo(a: Int): Future[Int]
 ```
-This is a very common sight in any scala program. Defines a 
-function `foo` which returns a `Future` that can either succeed 
-with an integer or fail with a `Throwable`.
+`foo` is a function that returns a `Future` which can succeed with an 
+`Int` or fail with a `Throwable`, and it looks exactly the same with
+typed Futures.
 
 Compile and or run test
 

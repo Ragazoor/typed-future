@@ -1,8 +1,8 @@
-package dev.ragz.future
+package dev.ragz.result
 
 import munit.FunSuite
 
-class FutureNonFatalSpec extends FunSuite {
+class ResultNonFatalSpec extends FunSuite {
   case class MyError(e: Throwable) extends Throwable(e.getMessage, e)
 
   test("MyError is non fatal") {

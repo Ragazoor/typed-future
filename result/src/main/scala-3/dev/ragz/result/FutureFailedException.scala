@@ -1,6 +1,6 @@
-package dev.ragz.future
+package dev.ragz.result
 
 object FutureFailedException {
-  private[future] type FutureFailedException = NoSuchElementException | FatalError
+  private[result] type FutureFailedException = NoSuchElementException | FatalError
 
 }
