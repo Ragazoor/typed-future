@@ -106,19 +106,19 @@ sealed trait Result[+E <: Throwable, +A] extends Awaitable[A] {
 
 object Result {
 
-  private final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends Result[E, A] {
+  private[result] final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends Result[E, A] {
     override def toFuture: StdFuture[A] = future
   }
 
-  private final case class Success[+A](success: A) extends Result[Nothing, A] {
+  private[result] final case class Success[+A](success: A) extends Result[Nothing, A] {
     override def toFuture: StdFuture[A] = StdFuture.successful(success)
   }
 
-  private final case class Failed[+E <: Exception](failure: E) extends Result[E, Nothing] {
+  private[result] final case class Failed[+E <: Exception](failure: E) extends Result[E, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
   }
 
-  private final case class Fatal(failure: Throwable) extends Result[FatalError, Nothing] {
+  private[result] final case class Fatal(failure: Throwable) extends Result[FatalError, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(FatalError(failure))
   }
 
@@ -130,7 +130,7 @@ object Result {
   def unapply[E <: Throwable, A](result: Result[E, A]): Option[StdFuture[A]] =
     Some(result.toFuture)
 
-  private final def apply[E <: Throwable, A](future: StdFuture[A]): Result[E, A] =
+  private[result] final def apply[E <: Throwable, A](future: StdFuture[A]): Result[E, A] =
     Attempt[E, A](future)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): Result[Throwable, A] =

@@ -1,4 +1,4 @@
-# Typed Futures
+# Scala Result
 Designed to be a drop in replacement for `scala.concurrent.Future`, 
 built entirely on top of `scala.concurrent.Future` but with typed Errors,
 with effortless integration.
@@ -8,7 +8,7 @@ with effortless integration.
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "dev.ragz" %% "typed-future" % "0.1.0"
+libraryDependencies += "dev.ragz" %% "scala-result" % "0.1.0"
 ```
 
 # Getting Started
@@ -16,8 +16,9 @@ libraryDependencies += "dev.ragz" %% "typed-future" % "0.1.0"
 def foo(a: Int): Future[Int]
 ```
 `foo` is a function that returns a `Future` which can succeed with an 
-`Int` or fail with a `Throwable`, and it looks exactly the same with
-typed Futures.
+`Int` or fail with a `Throwable`, and it looks exactly the same with 
+scala-result because of the type alias 
+`type Future[+A] = Result[Throwable, A]`.
 
 Compile and or run test
 
