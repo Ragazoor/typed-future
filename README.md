@@ -13,12 +13,14 @@ libraryDependencies += "dev.ragz" %% "scala-result" % "0.1.0"
 
 # Getting Started
 ```scala
-def foo(a: Int): Future[Int]
+def futureSuccess(a: Int): Future[Int] = Future.successful(a + 1)
+def futureFailed(a: Int): Future[Int] = Future.failed(new Exception("error"))
+
+def resultSuccess(a: Int): Result[Throwable, Int] = Result.successful(a + 1)
+def resultFailed(a: Int): Result[Throwable, Int] = Result.failed(new Exception("error"))
 ```
-`foo` is a function that returns a `Future` which can succeed with an 
-`Int` or fail with a `Throwable`, and it looks exactly the same with 
-scala-result because of the type alias 
-`type Future[+A] = Result[Throwable, A]`.
+
+All of these functions are equivalent and can be used interchangeably.
 
 Compile and or run test
 
