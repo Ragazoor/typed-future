@@ -16,8 +16,8 @@ libraryDependencies += "dev.ragz" %% "scala-result" % "0.1.0"
 def futureSuccess(a: Int): Future[Int] = Future.successful(a + 1)
 def futureFailed(a: Int): Future[Int] = Future.failed(new Exception("error"))
 
-def resultSuccess(a: Int): Result[Throwable, Int] = Result.successful(a + 1)
-def resultFailed(a: Int): Result[Throwable, Int] = Result.failed(new Exception("error"))
+def resultSuccess(a: Int): IO[Throwable, Int] = IO.successful(a + 1)
+def resultFailed(a: Int): IO[Throwable, Int] = IO.failed(new Exception("error"))
 ```
 
 All of these functions are equivalent and can be used interchangeably.

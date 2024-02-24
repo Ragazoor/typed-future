@@ -1,4 +1,4 @@
-package dev.ragz.result
+package dev.ragz.io
 
 import org.openjdk.jmh.annotations._
 
@@ -10,7 +10,7 @@ import scala.util.{ Success, Try }
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
 @Threads(value = 1)
-class FutureBenchmark {
+class IOBenchmark {
   private val size        = 1_000_000
   private val recursion = 100_000
   private val input     = 1 to size
@@ -21,7 +21,7 @@ class FutureBenchmark {
     r.get.isInstanceOf[Success[T]]
   }
 
-  protected final def await[E <: Throwable, T](result: Result[E, T]): Boolean = {
+  protected final def await[E <: Throwable, T](result: IO[E, T]): Boolean = {
     var r: Option[Try[T]] = None
     while (r eq None) r = result.value
     r.get.isInstanceOf[Success[T]]
@@ -31,7 +31,7 @@ class FutureBenchmark {
     await(StdFuture.sequence(input.map(StdFuture.successful)))
 
   @Benchmark def resultSequence: Boolean =
-    await(Result.sequence(input.map(Result.successful)))
+    await(IO.sequence(input.map(IO.successful)))
 
   @tailrec private[this] final def futureFlatMapRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -42,14 +42,14 @@ class FutureBenchmark {
   @Benchmark final def futureFlatMap: Boolean =
     await(futureFlatMapRec(recursion, StdFuture.successful(1)))
 
-  @tailrec private[this] final def resultFlatMapRec(i: Int, f: Result[Nothing, Int])(implicit
-                                                                                     ec: ExecutionContext
-  ): Result[Nothing, Int] =
-    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Result.successful)(ec))(ec)
+  @tailrec private[this] final def resultFlatMapRec(i: Int, f: IO[Nothing, Int])(implicit
+                                                                                 ec: ExecutionContext
+  ): IO[Nothing, Int] =
+    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(IO.successful)(ec))(ec)
     else f
 
   @Benchmark final def resultFlatMap: Boolean =
-    await(resultFlatMapRec(recursion, Result.successful(1)))
+    await(resultFlatMapRec(recursion, IO.successful(1)))
 
   @tailrec private[this] final def futureMapRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -60,14 +60,14 @@ class FutureBenchmark {
   @Benchmark final def futureMap: Boolean =
     await(futureMapRec(recursion, StdFuture.successful(1)))
 
-  @tailrec private[this] final def resultMapRec(i: Int, f: Result[Nothing, Int])(implicit
-                                                                                 ec: ExecutionContext
-  ): Result[Nothing, Int] =
+  @tailrec private[this] final def resultMapRec(i: Int, f: IO[Nothing, Int])(implicit
+                                                                             ec: ExecutionContext
+  ): IO[Nothing, Int] =
     if (i > 0) resultMapRec(i - 1, f.map(identity)(ec))(ec)
     else f
 
   @Benchmark final def resultMap: Boolean =
-    await(resultMapRec(recursion, Result.successful(1)))
+    await(resultMapRec(recursion, IO.successful(1)))
 
   @tailrec private[this] final def futureRecoverWithRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -75,9 +75,9 @@ class FutureBenchmark {
     if (i > 0) futureRecoverWithRec(i - 1, f.recoverWith(e => StdFuture.failed(e))(ec))(ec)
     else f
 
-  @tailrec private[this] final def resultMapErrorRec(i: Int, f: Result[RuntimeException, Int])(implicit
-                                                                                               ec: ExecutionContext
-  ): Result[RuntimeException, Int] =
+  @tailrec private[this] final def resultMapErrorRec(i: Int, f: IO[RuntimeException, Int])(implicit
+                                                                                           ec: ExecutionContext
+  ): IO[RuntimeException, Int] =
     if (i > 0) resultMapErrorRec(i - 1, f.mapError(identity)(ec))(ec)
     else f
 
@@ -85,5 +85,5 @@ class FutureBenchmark {
     await(futureRecoverWithRec(recursion, StdFuture.failed[Int](new RuntimeException("Future error"))))
 
   @Benchmark final def resultMapError: Boolean =
-    await(resultMapErrorRec(recursion, Result.failed(new RuntimeException("Result error"))))
+    await(resultMapErrorRec(recursion, IO.failed(new RuntimeException("Result error"))))
 }

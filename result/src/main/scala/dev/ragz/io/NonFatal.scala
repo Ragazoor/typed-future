@@ -1,4 +1,4 @@
-package dev.ragz.result
+package dev.ragz.io
 
 import scala.util.control
 
