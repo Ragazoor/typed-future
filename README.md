@@ -1,27 +1,38 @@
-# Scala Result
-Designed to be a drop in replacement for `scala.concurrent.Future`, 
-built entirely on top of `scala.concurrent.Future` but with typed Errors,
-with effortless integration.
+# Scala IO
+A Future based monad with typed errors.
+Designed to be a drop in replacement for `Future`, 
+built entirely on top of `Future` with the same performance,
+effortlessly integrates into existing `Future` based libraries.
 
 # Installation
 
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "dev.ragz" %% "scala-result" % "0.1.0"
+libraryDependencies += "dev.ragz" %% "io" % "0.1.0"
 ```
 
 # Getting Started
 ```scala
-def futureSuccess(a: Int): Future[Int] = Future.successful(a + 1)
-def futureFailed(a: Int): Future[Int] = Future.failed(new Exception("error"))
-
-def resultSuccess(a: Int): IO[Throwable, Int] = IO.successful(a + 1)
-def resultFailed(a: Int): IO[Throwable, Int] = IO.failed(new Exception("error"))
+val successIO: IO[Nothing, Int] = IO.successful(a + 1)
+val failedIO: IO[Throwable, Nothing] = IO.failed(new Exception("error"))
+val typedFailureIO: IO[RunTimeException, Nothing] = IO.failed(new RuntimeException("error"))
+val TaskIO: IO[Throwable, Int] = IO(1)
 ```
+This is the basics of using `IO` in your code. The IO has the same API
+as the `Future`, together with the type alias
+`type Future[+A] = IO[Throwable, A]` makes the type compatible with the `Future`.
+## Error handling
 
-All of these functions are equivalent and can be used interchangeably.
+```scala 
+val throwableIO: IO[Throwable, Nothing] = IO.failed(new Exception("error"))
+val runTimeExceptinIO: IO[RunTimeException, Nothing] =
+  throwableIO.mapError {
+    case e: Throwable => new RunTimeException(e)
+  }
 
+```
+```scala
 Compile and or run test
 
 ```shell

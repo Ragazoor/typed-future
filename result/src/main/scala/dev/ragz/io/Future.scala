@@ -3,6 +3,9 @@ package dev.ragz.io
 import scala.concurrent.{ExecutionContext, Future => StdFuture}
 import scala.util.Try
 
+/*
+ * Testing this to see if it is possible to make it completely drop in
+ */
 object Future {
 
   def unapply[E <: Throwable, A](result: IO[E, A]): Option[StdFuture[A]] =
@@ -25,9 +28,6 @@ object Future {
 
   final def failed[E <: Exception](exception: E): IO[E, Nothing] =
     IO.failed(exception)
-
-  final def fatal(exception: Throwable): IO[FatalError, Nothing] =
-    IO.fatal(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[IO[E, A]])(implicit
                                                                 ec: ExecutionContext
