@@ -34,4 +34,6 @@ object Future {
   ): IO[E, Seq[A]] =
     IO.sequence(results)
 
+  val unit = IO.unit
+
 }
