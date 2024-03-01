@@ -13,16 +13,17 @@ lazy val root =
     .settings(publish / skip := true)
     .aggregate(result, benchmark)
 
-lazy val result = module("result", "result")
+lazy val result = module("io", "result")
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("dev.ragz"))
   .settings(libraryDependencies += munit % Test)
-  .settings(stdSettings("result"))
+  .settings(stdSettings("io"))
 
 lazy val benchmark = module("benchmark", "benchmark")
   .enablePlugins(BuildInfoPlugin, JmhPlugin)
   .settings(buildInfoSettings("dev.ragz"))
   .settings(libraryDependencies += munit % Test)
+  .settings(publish / skip := true)
   .settings(stdSettings("benchmark"))
   .dependsOn(result)
 

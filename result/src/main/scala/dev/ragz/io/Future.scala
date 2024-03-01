@@ -1,6 +1,6 @@
 package dev.ragz.io
 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 import scala.util.Try
 
 /*
@@ -30,8 +30,10 @@ object Future {
     IO.failed(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[IO[E, A]])(implicit
-                                                                ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[E, Seq[A]] =
     IO.sequence(results)
+
+  val unit = IO.unit
 
 }

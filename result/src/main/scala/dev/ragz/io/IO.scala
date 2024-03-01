@@ -4,9 +4,9 @@ import dev.ragz.io.IOFailedException.IOFailedException
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
 import scala.util.control.NoStackTrace
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
@@ -16,6 +16,9 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
 
   def map[B](f: A => B)(implicit ec: ExecutionContext): IO[E, B] =
     IO(self.toFuture.transform(_ map f))
+
+  def mapEither[E2 >: E <: Throwable, B](f: A => Either[E2, B])(implicit ec: ExecutionContext): IO[E2, B] =
+    IO(self.toFuture.transform(_ flatMap (f(_).toTry)))
 
   def flatMap[E2 >: E <: Throwable, B](f: A => IO[E2, B])(implicit ec: ExecutionContext): IO[E2, B] =
     IO(self.toFuture.flatMap(f(_).toFuture))
@@ -35,12 +38,12 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
     zipWith(that)(IO.zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: IO[E2, U])(f: (A, U) => R)(implicit
-                                                                           ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[E2, R] =
     IO(self.toFuture.zipWith(that.toFuture)(f))
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => IO[E2, A2])(implicit
-                                                                  ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[E2, A2] =
     IO[E2, A2] {
       self.toFuture.transformWith {
@@ -50,7 +53,7 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
     }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, IO[E2, A2]])(implicit
-                                                                                   ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[E2, A2] =
     IO[E2, A2] {
       self.toFuture.transformWith {
@@ -60,7 +63,7 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
           self.toFuture
       }
     }
-  private final val failedFailure                                           =
+  private final val failedFailure                                   =
     Failure[Nothing](
       new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
     )
@@ -87,7 +90,7 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
     IO(self.toFuture.transform(f))
 
   def transformWith[E2 >: E <: Throwable, B](f: Try[A] => IO[E2, B])(implicit
-                                                                     executor: ExecutionContext
+    executor: ExecutionContext
   ): IO[E2, B] =
     IO(self.toFuture.transformWith(f(_).toFuture))
 
@@ -155,8 +158,9 @@ object IO {
     Fatal(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[IO[E, A]])(implicit
-                                                                ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[E, Seq[A]] =
     IO(StdFuture.sequence(results.map(_.toFuture)))
 
+  val unit = IO.successful(())
 }
