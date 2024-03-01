@@ -19,8 +19,8 @@ class FutureToIOSpec extends FunSuite {
   )
   test("Typed Future using flatmap") {
     val result: Future[Unit] = for {
-      1 <- StdFuture(1)
-    } yield assert(1 == 1)
+      result <- StdFuture(1)
+    } yield assert(result == 1)
 
     result
   }
