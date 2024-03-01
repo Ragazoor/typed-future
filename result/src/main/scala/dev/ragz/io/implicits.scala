@@ -1,6 +1,6 @@
 package dev.ragz.io
 
-import scala.concurrent.{Future => StdFuture}
+import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
 
 object implicits {

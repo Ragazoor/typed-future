@@ -11,7 +11,7 @@ import scala.util.{ Success, Try }
 @BenchmarkMode(Array(Mode.Throughput))
 @Threads(value = 1)
 class IOBenchmark {
-  private val size        = 1_000_000
+  private val size      = 1_000_000
   private val recursion = 100_000
   private val input     = 1 to size
 
@@ -43,7 +43,7 @@ class IOBenchmark {
     await(futureFlatMapRec(recursion, StdFuture.successful(1)))
 
   @tailrec private[this] final def resultFlatMapRec(i: Int, f: IO[Nothing, Int])(implicit
-                                                                                 ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[Nothing, Int] =
     if (i > 0) resultFlatMapRec(i - 1, f.flatMap(IO.successful)(ec))(ec)
     else f
@@ -61,7 +61,7 @@ class IOBenchmark {
     await(futureMapRec(recursion, StdFuture.successful(1)))
 
   @tailrec private[this] final def resultMapRec(i: Int, f: IO[Nothing, Int])(implicit
-                                                                             ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[Nothing, Int] =
     if (i > 0) resultMapRec(i - 1, f.map(identity)(ec))(ec)
     else f
@@ -76,7 +76,7 @@ class IOBenchmark {
     else f
 
   @tailrec private[this] final def resultMapErrorRec(i: Int, f: IO[RuntimeException, Int])(implicit
-                                                                                           ec: ExecutionContext
+    ec: ExecutionContext
   ): IO[RuntimeException, Int] =
     if (i > 0) resultMapErrorRec(i - 1, f.mapError(identity)(ec))(ec)
     else f
