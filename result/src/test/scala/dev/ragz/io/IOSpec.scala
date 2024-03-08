@@ -169,13 +169,13 @@ class IOSpec extends FunSuite {
       }
   }
 
-  test("Future.map with Either") {
+  test("Future.mapEither") {
     IO.successful(1)
       .mapEither(_ => Right(2))
       .map(result => assert(result == 2))
   }
 
-  test("Future.map with Either, with typed error") {
+  test("Future.mapEither, with typed error") {
     IO.successful(1)
       .mapEither[RuntimeException, Int](_ => Left(new RuntimeException("Test message")))
       .map(_ => assert(false))
@@ -183,4 +183,11 @@ class IOSpec extends FunSuite {
         IO.successful(assert(true))
       }
   }
+
+  test("Future.mapTry") {
+    IO.successful(1)
+      .mapTry(_ => Try(2))
+      .map(result => assert(result == 2))
+  }
+
 }

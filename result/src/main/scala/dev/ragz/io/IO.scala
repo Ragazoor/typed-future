@@ -17,6 +17,9 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   def map[B](f: A => B)(implicit ec: ExecutionContext): IO[E, B] =
     IO(self.toFuture.transform(_ map f))
 
+  def mapTry[B](f: A => Try[B])(implicit ec: ExecutionContext): IO[Throwable, B] =
+    IO(self.toFuture.transform(_ flatMap f))
+
   def mapEither[E2 >: E <: Throwable, B](f: A => Either[E2, B])(implicit ec: ExecutionContext): IO[E2, B] =
     IO(self.toFuture.transform(_ flatMap (f(_).toTry)))
 
