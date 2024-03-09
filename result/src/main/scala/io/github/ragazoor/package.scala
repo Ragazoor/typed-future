@@ -1,6 +1,6 @@
-package dev.ragz
+package io.github
 
-package object io {
+package object ragazoor {
   type Future[+A]       = IO[Throwable, A]
   type ExecutionContext = scala.concurrent.ExecutionContext
 

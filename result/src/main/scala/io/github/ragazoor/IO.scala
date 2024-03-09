@@ -1,6 +1,6 @@
-package dev.ragz.io
+package io.github.ragazoor
 
-import dev.ragz.io.IOFailedException.IOFailedException
+import IOFailedException.IOFailedException
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration

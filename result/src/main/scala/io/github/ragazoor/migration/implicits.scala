@@ -1,8 +1,8 @@
-package dev.ragz.io.migration
+package io.github.ragazoor.migration
 
 import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
-import dev.ragz.io.IO
+import io.github.ragazoor.IO
 
 object implicits extends IoToStdFuture {
 
