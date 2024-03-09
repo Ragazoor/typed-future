@@ -1,4 +1,6 @@
-package dev.ragz.io
+package dev.ragz.io.migration
+
+import dev.ragz.io.IO
 
 import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
