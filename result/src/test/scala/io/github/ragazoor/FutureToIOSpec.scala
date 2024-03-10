@@ -1,9 +1,9 @@
-package dev.ragz.io
+package io.github.ragazoor
 
 import munit.FunSuite
 
 import scala.concurrent.{ Future => StdFuture }
-import dev.ragz.io.implicits._
+import implicits._
 
 class FutureToIOSpec extends FunSuite {
 
