@@ -13,6 +13,16 @@ libraryDependencies += "dev.ragz" %% "io" % "0.1.0"
 ```
 
 # Getting Started
+Compile and or run test
+
+```shell
+sbt compile
+```
+
+```shell
+sbt test
+```
+## Examples
 ```scala
 import dev.ragz.io.implicits._
 
@@ -37,14 +47,40 @@ val runTimeExceptinIO: IO[RunTimeException, Nothing] =
   }
 
 ```
-Compile and or run test
 
-```shell
-sbt compile
+## Migration
+The goal is to eventually be able to replace `scala.concurrent`, however we
+not everything is available yet. If you are only using `Future`, 
+`ExecutionContext` and `NonFatal` you can use the following to migrate 
+most of the code:
+```text
+replace: 
+import.scala.concurrent.*
+
+with: 
+import io.github.ragazoor.*
+import io.github.ragazoor.implicits.*
+import io.github.ragazoor.migration.implicits.*
 ```
 
-```shell
-sbt test
+There are a few occurrences where we need to manually fix the code:
+- If we are using a third-party library returning a `scala.concurrent.Future` 
+ we need to convert it to `IO` using `.io` and the implicit in 
+ `ragazoor.implicits.*`. 
+- If there are async tests using `scala.concurrent.Future` but does not
+have `scala.concurrent` in imported we need to add 
+`import io.github.ragazoor.migration.implicits.*`.
+- If you are using implicit classes that are extending 
+`scala.concurrent.Future` the compiler will not be able to convert 
+like one might think using the migration implicits. So we need to make 
+it explicit:
+```scala
+implicit class MyImplicitClassFunction(f: Future[Int]) {
+  def bar: Future[Option[Int]] = f.map(Some(_))
+}
+def foo: IO[Throwable, Int] = ???
+val a: IO[Throwable, Option[Int]] = foo.myImplicitClassFunction.io // does not compile
+val a: IO[Throwable, Option[Int]] = foo.toFuture.myImplicitClassFunction.io // compiles
 ```
 
 ## Benchmarks
