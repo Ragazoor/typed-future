@@ -9,7 +9,7 @@ the same performance and easily integrates into existing `Future` based librarie
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "dev.ragz" %% "io" % "0.1.0"
+libraryDependencies += "io.github.ragazoor" %% "io" % "0.1.0"
 ```
 
 # Getting Started

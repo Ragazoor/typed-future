@@ -1,4 +1,3 @@
-package io.github.ragazoor
 
 import IOFailedException.IOFailedException
 

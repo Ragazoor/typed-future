@@ -1,8 +1,10 @@
 import Dependencies._
 import BuildHelper._
 
+lazy val organizationName = "io.github.ragazoor"
+
 ThisBuild / version      := "0.1.0-SNAPSHOT"
-ThisBuild / organization := "dev.ragz"
+ThisBuild / organization := organizationName
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
@@ -13,15 +15,15 @@ lazy val root =
     .settings(publish / skip := true)
     .aggregate(result, benchmark)
 
-lazy val result = module("io", "result")
+lazy val result = module("io", "io")
   .enablePlugins(BuildInfoPlugin)
-  .settings(buildInfoSettings("dev.ragz"))
+  .settings(buildInfoSettings(organizationName))
   .settings(libraryDependencies += munit % Test)
   .settings(stdSettings("io"))
 
 lazy val benchmark = module("benchmark", "benchmark")
   .enablePlugins(BuildInfoPlugin, JmhPlugin)
-  .settings(buildInfoSettings("dev.ragz"))
+  .settings(buildInfoSettings(organizationName))
   .settings(libraryDependencies += munit % Test)
   .settings(publish / skip := true)
   .settings(stdSettings("benchmark"))

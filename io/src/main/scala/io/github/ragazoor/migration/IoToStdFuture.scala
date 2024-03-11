@@ -1,4 +1,3 @@
-package io.github.ragazoor.migration
 
 import io.github.ragazoor.IO
 
