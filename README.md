@@ -1,4 +1,4 @@
-# An error typed Future
+# A Future with typed errors
 A Future based monad with typed errors.
 Designed to be a replacement for the `scala.concurrent.Future` with minimal
 migration needed. Entirely built on top of the `scala.concurrent.Future` it has
