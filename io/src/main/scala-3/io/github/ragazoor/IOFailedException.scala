@@ -1,6 +1,6 @@
 package io.github.ragazoor
 
 object IOFailedException {
-  private[io] type IOFailedException = NoSuchElementException | FatalError
+  private[ragazoor] type IOFailedException = NoSuchElementException | FatalError
 
 }
