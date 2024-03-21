@@ -112,31 +112,31 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
 
 object IO {
 
-  private[io] final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends IO[E, A] {
+  private[ragazoor] final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends IO[E, A] {
     override def toFuture: StdFuture[A] = future
   }
 
-  private[io] final case class Success[+A](success: A) extends IO[Nothing, A] {
+  private[ragazoor] final case class Success[+A](success: A) extends IO[Nothing, A] {
     override def toFuture: StdFuture[A] = StdFuture.successful(success)
   }
 
-  private[io] final case class Failed[+E <: Exception](failure: E) extends IO[E, Nothing] {
+  private[ragazoor] final case class Failed[+E <: Exception](failure: E) extends IO[E, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
   }
 
-  private[io] final case class Fatal(failure: Throwable) extends IO[FatalError, Nothing] {
+  private[ragazoor] final case class Fatal(failure: Throwable) extends IO[FatalError, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(FatalError(failure))
   }
 
   private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply
 
-  private[io] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
+  private[ragazoor] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
     _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
 
   def unapply[E <: Throwable, A](result: IO[E, A]): Option[StdFuture[A]] =
     Some(result.toFuture)
 
-  private[io] final def apply[E <: Throwable, A](future: StdFuture[A]): IO[E, A] =
+  private[ragazoor] final def apply[E <: Throwable, A](future: StdFuture[A]): IO[E, A] =
     Attempt[E, A](future)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): IO[Throwable, A] =
