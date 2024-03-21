@@ -1,3 +1,4 @@
+package io.github.ragazoor.migration
 
 import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
