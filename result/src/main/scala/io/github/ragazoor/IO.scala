@@ -1,10 +1,10 @@
 package io.github.ragazoor
 
-import IOFailedException.IOFailedException
+import io.github.ragazoor.IOFailedException.IOFailedException
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
+import scala.concurrent.{ Future => StdFuture }
 import scala.util.control.NoStackTrace
 import scala.util.{ Failure, Success, Try }
 

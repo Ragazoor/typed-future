@@ -1,6 +1,6 @@
 package io.github.ragazoor
 
-import scala.concurrent.{ ExecutionContext, Future => StdFuture }
+import scala.concurrent.{ Future => StdFuture }
 import scala.util.Try
 
 /*
