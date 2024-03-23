@@ -5,12 +5,12 @@ package object ragazoor {
   type ExecutionContext = scala.concurrent.ExecutionContext
 
   /**
-   * Type alias for [[scala.concurrent.ExecutionContextExecutor ExecutionContextExecutor]].
+   * Type alias for scala.concurrent.ExecutionContextExecutor.
    */
   type ExecutionContextExecutor = scala.concurrent.ExecutionContextExecutor
 
   /**
-   * Type alias for [[scala.concurrent.ExecutionContextExecutorService ExecutionContextExecutorService]].
+   * Type alias for scala.concurrent.ExecutionContextExecutorService.
    */
   type ExecutionContextExecutorService = scala.concurrent.ExecutionContextExecutorService
 
