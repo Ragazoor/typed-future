@@ -9,10 +9,10 @@ import scala.util.Try
 object Future {
 
   def unapply[E <: Throwable, A](result: IO[E, A]): Option[StdFuture[A]] =
-    IO.unapply(result)
+    IO.unapply(result).map(_._1)
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): IO[Throwable, A] =
-    IO[Throwable, A](StdFuture(body))
+    IO[Throwable, A](StdFuture(body), fatal = false)
 
   final def fromFuture[A](future: StdFuture[A]): IO[Throwable, A] =
     IO.fromFuture(future)

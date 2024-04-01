@@ -12,9 +12,7 @@ class IOSpec extends FunSuite {
   override def munitValueTransforms = super.munitValueTransforms ++ List(
     new ValueTransform(
       "TypedFuture",
-      { case IO(future) =>
-        future
-      }
+      { case IO(future, _) => future }
     )
   )
 
@@ -128,14 +126,16 @@ class IOSpec extends FunSuite {
   }
 
   test("Typed Future cannot catch fatal errors") {
-    val a = for {
-      _ <- IO.fatal(MyError(new IllegalArgumentException("Bad argument")))
+    val fatalIO = for {
+      _ <- IO.fatal(new RuntimeException("Killing the process"))
     } yield assert(false)
-    a.catchAll { _ =>
-      IO.successful(assert(false))
-    }.toFuture.recover { case _: FatalError =>
-      assert(true)
-    }
+    val isFatal = fatalIO.isFatal
+    fatalIO
+      .catchAll(_ => IO.successful(assert(false)))
+      .toFuture
+      .recover { case _: RuntimeException =>
+        assert(isFatal)
+      }
   }
 
   test("Future.failed returns error") {
@@ -156,17 +156,17 @@ class IOSpec extends FunSuite {
   }
 
   test("Future.failed fails with FatalError if it contains a FatalError") {
-    IO
+    val fatalIO = IO
       .fatal(new RuntimeException("Test message"))
       .failed
       .map(_ => assert(false))
       .catchSome { case _: NoSuchElementException =>
         IO.successful(assert(false))
       }
-      .toFuture
-      .recover { case _: FatalError =>
-        assert(true)
-      }
+    val isFatal = fatalIO.isFatal
+    fatalIO.toFuture.recover { case _: RuntimeException =>
+      assert(isFatal)
+    }
   }
 
   test("Future.mapEither") {
