@@ -32,7 +32,7 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): IO[E2, A] =
     IO[E2, A] {
       self.toFuture.transform {
-        case Failure(e) => Failure(f(e.asInstanceOf[E]))
+        case Failure(e) if NonFatal(e) => Failure(f(e.asInstanceOf[E]))
         case success    => success
       }
     }
