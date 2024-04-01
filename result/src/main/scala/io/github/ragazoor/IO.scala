@@ -116,11 +116,11 @@ object IO {
     override def toFuture: StdFuture[A] = future
   }
 
-  private[io] final case class Success[+A](success: A) extends IO[Nothing, A] {
+  private[io] final case class Successful[+A](success: A) extends IO[Nothing, A] {
     override def toFuture: StdFuture[A] = StdFuture.successful(success)
   }
 
-  private[io] final case class Failed[+E <: Exception](failure: E) extends IO[E, Nothing] {
+  private[io] final case class Failure[+E <: Exception](failure: E) extends IO[E, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
   }
 
@@ -137,7 +137,9 @@ object IO {
     Some(result.toFuture)
 
   private[io] final def apply[E <: Throwable, A](future: StdFuture[A]): IO[E, A] =
-    Attempt[E, A](future)
+    new IO[E, A] {
+      override def toFuture: StdFuture[A] = future
+    }
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): IO[Throwable, A] =
     IO[Throwable, A](StdFuture(body))
@@ -152,10 +154,10 @@ object IO {
     IO[Throwable, A](StdFuture.fromTry(body))
 
   final def successful[A](value: A): IO[Nothing, A] =
-    Success[A](value)
+    Successful[A](value)
 
   final def failed[E <: Exception](exception: E): IO[E, Nothing] =
-    Failed[E](exception)
+    Failure[E](exception)
 
   final def fatal(exception: Throwable): IO[FatalError, Nothing] =
     Fatal(exception)
