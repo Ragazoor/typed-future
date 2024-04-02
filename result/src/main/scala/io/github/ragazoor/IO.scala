@@ -1,7 +1,5 @@
 package io.github.ragazoor
 
-import io.github.ragazoor.IOFailedException.IOFailedException
-
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
@@ -31,15 +29,13 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
     flatMap(ev)(parasitic)
 
   def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): IO[E2, A] = {
-    var isFailureFatal    = isFatal
     val transformedFuture = self.toFuture.transform {
       case Failure(e) if NonFatal(e) || !isFatal  => Failure(f(e.asInstanceOf[E]))
       case Failure(e) if !NonFatal(e) || !isFatal =>
-        isFailureFatal = true
         Failure(e)
       case success                                => success
     }
-    IO[E2, A](transformedFuture, isFailureFatal)
+    IO[E2, A](transformedFuture, isFatal)
   }
 
   def zip[E2 >: E <: Throwable, B](that: IO[E2, B]): IO[E2, (A, B)] =
@@ -88,8 +84,8 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
       case Success(_)                            => failedFailure
     }
 
-  def failed: IO[IOFailedException, E] =
-    transform(failedFun)(parasitic).asInstanceOf[IO[IOFailedException, E]]
+  def failed: IO[NoSuchElementException, E] =
+    transform(failedFun)(parasitic).asInstanceOf[IO[NoSuchElementException, E]]
 
   def foreach[U](f: A => U)(implicit executor: ExecutionContext): Unit =
     onComplete(_ foreach f)
