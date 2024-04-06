@@ -82,6 +82,25 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
       .mapError(UserNotFound(id))
 ```
 
+Similar to `ZIO` it is also possible to create IO's with errors that we cannot
+recover from, except with a few methods like `catch` and `recover`. This is done by using `IO.fatal`:
+
+```scala
+case class UnrecoverableError(message: String, cause: Throwable) extends Exception(message, cause)
+
+class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
+  def getUser(id: Int): IO[UserNotFound, User] =
+    if (id < 0) {
+      IO.fatal(UnrecoverableError("Not best example but lets say this is a fatal error", new RuntimeException("Fatal error")))
+    } else {
+      userRepo
+        .getUser(id)
+        .io // Converts to IO
+        .mapError(UserNotFound(id))
+    }
+}
+```
+
 ## Migration
 
 The goal is to eventually be able to replace `scala.concurrent`, however we

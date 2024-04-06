@@ -4,7 +4,7 @@ import scala.util.Failure
 import scala.util.control.NoStackTrace
 
 object IOUtils {
-  private[ragazoor] final val failedFailure =
+  private[ragazoor] final val failedFailure                  =
     Failure[Nothing](
       new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
     )

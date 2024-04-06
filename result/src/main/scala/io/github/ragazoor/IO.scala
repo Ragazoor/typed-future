@@ -1,12 +1,12 @@
 package io.github.ragazoor
 
-import io.github.ragazoor.IOUtils.{failedFailure, zipWithTuple2Fun}
+import io.github.ragazoor.IOUtils.{ failedFailure, zipWithTuple2Fun }
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, TimeoutException, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
@@ -157,12 +157,11 @@ object IO {
     }
   }
 
-  final def fatal[E <: Throwable](exception: Throwable): IO[E, Nothing] = {
+  final def fatal(exception: Exception): IO[Nothing, Nothing] = {
     val future = StdFuture.failed(exception)
-    new IO[E, Nothing] {
+    new IO[Nothing, Nothing] {
       override def toFuture: StdFuture[Nothing] = future
-
-      override val isFatal: Boolean = true
+      override val isFatal: Boolean             = true
     }
   }
 
