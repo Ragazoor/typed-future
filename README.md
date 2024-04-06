@@ -56,6 +56,33 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
 }
 ```
 
+```scala
+import scala.concurrent.{Future => StdFuture}
+import io.github.ragazoor.{ExecutionContext, Future}
+import io.github.ragazoor.implicits._
+import io.github.ragazoor.migration.implicits._
+
+case class User(name: String, age: Int)
+
+trait UserRepository {
+  def getUser(id: Int): IO[Exception, User]
+}
+
+class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
+  // implicit conversion in io.github.ragazoor.migration.implicits._ 
+  // converts the IO to a Future
+  
+  def getUser(id: Int): StdFuture[User] = 
+    userRepo.getUser(id)
+    
+  // Does the same thing without implicits, but more migration needed
+  def getUserExplicit(id: Int): StdFuture[User] =
+    userRepo.getUser(id).toFuture
+}
+```
+
+
+
 This is the basics of how to enable the use of a typed future in
 your future based code. The `IO` has the same API
 as the `StdFuture`, and thanks to the type alias
@@ -103,8 +130,8 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
 
 ## Migration
 
-The goal is to eventually be able to replace `scala.concurrent`, however we
-not everything is available yet. If you are only using `Future`,
+The goal is to eventually be able to replace `scala.concurrent`, however
+not everything is available yet. If you are only using `StdFuture`,
 `ExecutionContext` and `NonFatal` you can use the following to migrate
 most of the code:
 
@@ -126,19 +153,19 @@ There are a few occurrences where we need to manually fix the code:
 - If there are async tests using `scala.concurrent.Future` but does not
   have `scala.concurrent` in imported we need to add
   `import io.github.ragazoor.migration.implicits.*`.
-- If you are using implicit classes that are extending
-  `scala.concurrent.Future` the compiler will not be able to convert
+- If you are using implicit classes that uses the 
+  `StdFuture` the compiler will not be able to convert
   like one might think using the migration implicits. So we need to make
   it explicit:
 
 ```scala
-implicit class MyImplicitClassFunction(f: Future[Int]) {
-  def bar: Future[Option[Int]] = f.map(Some(_))
+implicit class MyImplicitClassFunction(f: StdFuture[Int]) {
+  def bar: StdFuture[Option[Int]] = f.map(Some(_))
 }
 
 def foo: IO[Throwable, Int] = ???
-val a: IO[Throwable, Option[Int]] = foo.myImplicitClassFunction.io // does not compile
-val a: IO[Throwable, Option[Int]] = foo.toFuture.myImplicitClassFunction.io // compiles
+val a: IO[Throwable, Option[Int]] = foo.bar.io // does not compile
+val a: IO[Throwable, Option[Int]] = foo.toFuture.bar.io // compiles
 ```
 
 ## Benchmarks
