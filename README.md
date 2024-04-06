@@ -16,6 +16,9 @@ However if you do not want to commit to another effect system and
 still want complete control of your types this library is for you.
 
 # Installation
+[!NOTE]
+Due to the new sonatype interace the library is not yet available 
+in maven central.
 
 Setup via `build.sbt`:
 
@@ -80,8 +83,6 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
     userRepo.getUser(id).toFuture
 }
 ```
-
-
 
 This is the basics of how to enable the use of a typed future in
 your future based code. The `IO` has the same API
