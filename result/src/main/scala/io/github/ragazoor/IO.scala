@@ -1,9 +1,11 @@
 package io.github.ragazoor
 
+import io.github.ragazoor.IOUtils.{ failedFailure, zipWithTuple2Fun }
+
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
-import scala.util.control.{ NoStackTrace, NonFatal }
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
+import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
 sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
@@ -41,7 +43,7 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   }
 
   def zip[E2 >: E <: Throwable, B](that: IO[E2, B]): IO[E2, (A, B)] =
-    zipWith(that)(IO.zipWithTuple2Fun)(parasitic)
+    zipWith(that)(zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: IO[E2, U])(f: (A, U) => R)(implicit
     ec: ExecutionContext
@@ -74,11 +76,6 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
     IO[E2, A2](transformedFuture, isFatal)
   }
 
-  private final val failedFailure =
-    Failure[Nothing](
-      new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
-    )
-
   private final def failedFun[B](v: Try[B]): Try[E] =
     v match {
       case Failure(e) if NonFatal(e) && !isFatal => Success(e.asInstanceOf[E])
@@ -105,15 +102,15 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   ): IO[E2, B] =
     IO(self.toFuture.transformWith(f(_).toFuture), isFatal)
 
-//  @throws(classOf[TimeoutException])
-//  @throws(classOf[InterruptedException])
+  @throws(classOf[TimeoutException])
+  @throws(classOf[InterruptedException])
   def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
     self.toFuture.ready(atMost)
     this
   }
 
-//  @throws(classOf[TimeoutException])
-//  @throws(classOf[InterruptedException])
+  @throws(classOf[TimeoutException])
+  @throws(classOf[InterruptedException])
   def result(atMost: Duration)(implicit permit: CanAwait): A =
     self.toFuture.result(atMost)
 
@@ -123,20 +120,10 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
 }
 
 object IO {
-
-  private[io] final case class Failed[+E <: Throwable](failure: E, isFatal: Boolean) extends IO[E, Nothing] {
-    override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
-  }
-
-  private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply
-
-  private[io] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
-    _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
-
   def unapply[E <: Throwable, A](result: IO[E, A]): Option[(StdFuture[A], Boolean)] =
     Some((result.toFuture, result.isFatal))
 
-  private[io] final def apply[E <: Throwable, A](future: StdFuture[A], fatal: Boolean): IO[E, A] =
+  private[ragazoor] final def apply[E <: Throwable, A](future: StdFuture[A], fatal: Boolean): IO[E, A] =
     new IO[E, A] {
       override def toFuture: StdFuture[A] = future
       override val isFatal: Boolean       = fatal
@@ -170,12 +157,11 @@ object IO {
     }
   }
 
-  final def fatal[E <: Throwable](exception: Throwable): IO[E, Nothing] = {
+  final def fatal(exception: Exception): IO[Nothing, Nothing] = {
     val future = StdFuture.failed(exception)
-    new IO[E, Nothing] {
+    new IO[Nothing, Nothing] {
       override def toFuture: StdFuture[Nothing] = future
-
-      override val isFatal: Boolean = true
+      override val isFatal: Boolean             = true
     }
   }
 
