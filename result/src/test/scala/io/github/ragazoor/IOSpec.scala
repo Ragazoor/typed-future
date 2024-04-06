@@ -190,20 +190,21 @@ class IOSpec extends FunSuite {
       .map(result => assert(result == 2))
   }
 
-
   test("IO mapError cannot catch fatal errors") {
     val result = for {
       _ <- IO.fatal(new RuntimeException("Test message"))
     } yield assert(false)
 
     result
-    .mapError(MyError.apply)
-    .catchSome { case _: MyError =>
-      IO.successful(assert(false))
-    }
-    .toFuture
-    .recover {
-      case _: RuntimeException => assert(true)
-    }
+      .mapError(MyError.apply)
+      .catchSome { case _: MyError =>
+        IO.successful(assert(false))
+      }
+      .toFuture
+      .recover {
+        case _: RuntimeException => assert(true)
+        case e                   => assert(e.getMessage == "Test message")
+      }
+
   }
 }
