@@ -1,41 +1,44 @@
 package io.github.ragazoor
 
-import IOFailedException.IOFailedException
-
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture }
-import scala.util.control.NoStackTrace
+import scala.util.control.{ NoStackTrace, NonFatal }
 import scala.util.{ Failure, Success, Try }
 
 sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
   def toFuture: StdFuture[A]
+  val isFatal: Boolean
 
   def value: Option[Try[A]] = self.toFuture.value
 
   def map[B](f: A => B)(implicit ec: ExecutionContext): IO[E, B] =
-    IO(self.toFuture.transform(_ map f))
+    IO(self.toFuture.transform(_ map f), isFatal)
 
   def mapTry[B](f: A => Try[B])(implicit ec: ExecutionContext): IO[Throwable, B] =
-    IO(self.toFuture.transform(_ flatMap f))
+    IO(self.toFuture.transform(_ flatMap f), isFatal)
 
   def mapEither[E2 >: E <: Throwable, B](f: A => Either[E2, B])(implicit ec: ExecutionContext): IO[E2, B] =
-    IO(self.toFuture.transform(_ flatMap (f(_).toTry)))
+    IO(self.toFuture.transform(_ flatMap (f(_).toTry)), isFatal)
 
   def flatMap[E2 >: E <: Throwable, B](f: A => IO[E2, B])(implicit ec: ExecutionContext): IO[E2, B] =
-    IO(self.toFuture.flatMap(f(_).toFuture))
+    IO(self.toFuture.flatMap(f(_).toFuture), isFatal)
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< IO[E2, B]): IO[E2, B] =
     flatMap(ev)(parasitic)
 
-  def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): IO[E2, A] =
-    IO[E2, A] {
-      self.toFuture.transform {
-        case Failure(e) => Failure(f(e.asInstanceOf[E]))
-        case success    => success
-      }
+  def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): IO[E2, A] = {
+    var isFutureFatal     = isFatal
+    val transformedFuture = self.toFuture.transform {
+      case Failure(e) if NonFatal(e) && !isFatal => Failure(f(e.asInstanceOf[E]))
+      case Failure(e) if !NonFatal(e) || isFatal =>
+        isFutureFatal = true
+        Failure(e)
+      case success                               => success
     }
+    IO[E2, A](transformedFuture, isFutureFatal)
+  }
 
   def zip[E2 >: E <: Throwable, B](that: IO[E2, B]): IO[E2, (A, B)] =
     zipWith(that)(IO.zipWithTuple2Fun)(parasitic)
@@ -43,43 +46,48 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   def zipWith[E2 >: E <: Throwable, U, R](that: IO[E2, U])(f: (A, U) => R)(implicit
     ec: ExecutionContext
   ): IO[E2, R] =
-    IO(self.toFuture.zipWith(that.toFuture)(f))
+    IO(self.toFuture.zipWith(that.toFuture)(f), isFatal || that.isFatal)
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => IO[E2, A2])(implicit
     ec: ExecutionContext
-  ): IO[E2, A2] =
-    IO[E2, A2] {
-      self.toFuture.transformWith {
-        case Failure(e) if NonFatal(e) => f(e.asInstanceOf[E]).toFuture
-        case _                         => self.toFuture
-      }
+  ): IO[E2, A2] = {
+    var isFutureFatal     = isFatal
+    val transformedFuture = self.toFuture.transformWith {
+      case Failure(e) if NonFatal(e) && !isFatal => f(e.asInstanceOf[E]).toFuture
+      case Failure(e) if !NonFatal(e) || isFatal =>
+        isFutureFatal = true
+        self.toFuture
+      case _                                     => self.toFuture
     }
+    IO[E2, A2](transformedFuture, isFutureFatal)
+  }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, IO[E2, A2]])(implicit
     ec: ExecutionContext
-  ): IO[E2, A2] =
-    IO[E2, A2] {
-      self.toFuture.transformWith {
-        case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
-          pf(e.asInstanceOf[E]).toFuture
-        case _                                                              =>
-          self.toFuture
-      }
+  ): IO[E2, A2] = {
+    val transformedFuture = self.toFuture.transformWith {
+      case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) && !isFatal =>
+        pf(e.asInstanceOf[E]).toFuture
+      case _                                                                          =>
+        self.toFuture
     }
-  private final val failedFailure                                   =
+    IO[E2, A2](transformedFuture, isFatal)
+  }
+
+  private final val failedFailure =
     Failure[Nothing](
       new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
     )
 
   private final def failedFun[B](v: Try[B]): Try[E] =
     v match {
-      case Failure(e) if NonFatal(e) => Success(e.asInstanceOf[E])
-      case Failure(exception)        => Failure(exception)
-      case Success(_)                => failedFailure
+      case Failure(e) if NonFatal(e) && !isFatal => Success(e.asInstanceOf[E])
+      case Failure(exception)                    => Failure(exception)
+      case Success(_)                            => failedFailure
     }
 
-  def failed: IO[IOFailedException, E] =
-    transform(failedFun)(parasitic).asInstanceOf[IO[IOFailedException, E]]
+  def failed: IO[NoSuchElementException, E] =
+    transform(failedFun)(parasitic).asInstanceOf[IO[NoSuchElementException, E]]
 
   def foreach[U](f: A => U)(implicit executor: ExecutionContext): Unit =
     onComplete(_ foreach f)
@@ -90,12 +98,12 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   def isCompleted: Boolean = self.toFuture.isCompleted
 
   def transform[B](f: Try[A] => Try[B])(implicit executor: ExecutionContext): IO[Throwable, B] =
-    IO(self.toFuture.transform(f))
+    IO(self.toFuture.transform(f), isFatal)
 
   def transformWith[E2 >: E <: Throwable, B](f: Try[A] => IO[E2, B])(implicit
     executor: ExecutionContext
   ): IO[E2, B] =
-    IO(self.toFuture.transformWith(f(_).toFuture))
+    IO(self.toFuture.transformWith(f(_).toFuture), isFatal)
 
 //  @throws(classOf[TimeoutException])
 //  @throws(classOf[InterruptedException])
@@ -108,24 +116,16 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
 //  @throws(classOf[InterruptedException])
   def result(atMost: Duration)(implicit permit: CanAwait): A =
     self.toFuture.result(atMost)
+
+  def recover[B >: A](pf: PartialFunction[E, B])(implicit executor: ExecutionContext): IO[E, B] =
+    transform(_.recover(pf.asInstanceOf[PartialFunction[Throwable, B]]))
+      .asInstanceOf[IO[E, B]]
 }
 
 object IO {
 
-  private[io] final case class Attempt[+E <: Throwable, +A](future: StdFuture[A]) extends IO[E, A] {
-    override def toFuture: StdFuture[A] = future
-  }
-
-  private[io] final case class Success[+A](success: A) extends IO[Nothing, A] {
-    override def toFuture: StdFuture[A] = StdFuture.successful(success)
-  }
-
-  private[io] final case class Failed[+E <: Exception](failure: E) extends IO[E, Nothing] {
+  private[io] final case class Failed[+E <: Throwable](failure: E, isFatal: Boolean) extends IO[E, Nothing] {
     override def toFuture: StdFuture[Nothing] = StdFuture.failed(failure)
-  }
-
-  private[io] final case class Fatal(failure: Throwable) extends IO[FatalError, Nothing] {
-    override def toFuture: StdFuture[Nothing] = StdFuture.failed(FatalError(failure))
   }
 
   private final val _zipWithTuple2: (Any, Any) => (Any, Any) = Tuple2.apply
@@ -133,37 +133,56 @@ object IO {
   private[io] final def zipWithTuple2Fun[T, U]: (T, U) => (T, U) =
     _zipWithTuple2.asInstanceOf[(T, U) => (T, U)]
 
-  def unapply[E <: Throwable, A](result: IO[E, A]): Option[StdFuture[A]] =
-    Some(result.toFuture)
+  def unapply[E <: Throwable, A](result: IO[E, A]): Option[(StdFuture[A], Boolean)] =
+    Some((result.toFuture, result.isFatal))
 
-  private[io] final def apply[E <: Throwable, A](future: StdFuture[A]): IO[E, A] =
-    Attempt[E, A](future)
+  private[io] final def apply[E <: Throwable, A](future: StdFuture[A], fatal: Boolean): IO[E, A] =
+    new IO[E, A] {
+      override def toFuture: StdFuture[A] = future
+      override val isFatal: Boolean       = fatal
+    }
 
   final def apply[A](body: => A)(implicit ec: ExecutionContext): IO[Throwable, A] =
-    IO[Throwable, A](StdFuture(body))
+    IO[Throwable, A](StdFuture(body), fatal = false)
 
   final def fromFuture[A](future: StdFuture[A]): IO[Throwable, A] =
-    IO(future)
+    IO(future, fatal = false)
 
   final def fromEither[E <: Throwable, A](either: Either[E, A]): IO[E, A] =
-    IO(StdFuture.fromTry(either.toTry))
+    IO(StdFuture.fromTry(either.toTry), fatal = false)
 
-  final def fromTry[A](body: Try[A]): IO[Throwable, A] =
-    IO[Throwable, A](StdFuture.fromTry(body))
+  final def fromTry[A](result: Try[A]): IO[Throwable, A] =
+    IO[Throwable, A](StdFuture.fromTry(result), fatal = false)
 
-  final def successful[A](value: A): IO[Nothing, A] =
-    Success[A](value)
+  final def successful[A](result: A): IO[Nothing, A] = {
+    val future = StdFuture.successful(result)
+    new IO[Nothing, A] {
+      override def toFuture: StdFuture[A] = future
+      override val isFatal: Boolean       = false
+    }
+  }
 
-  final def failed[E <: Exception](exception: E): IO[E, Nothing] =
-    Failed[E](exception)
+  final def failed[E <: Exception](exception: E): IO[E, Nothing] = {
+    val future = StdFuture.failed(exception)
+    new IO[E, Nothing] {
+      override def toFuture: StdFuture[Nothing] = future
+      override val isFatal: Boolean             = false
+    }
+  }
 
-  final def fatal(exception: Throwable): IO[FatalError, Nothing] =
-    Fatal(exception)
+  final def fatal[E <: Throwable](exception: Throwable): IO[E, Nothing] = {
+    val future = StdFuture.failed(exception)
+    new IO[E, Nothing] {
+      override def toFuture: StdFuture[Nothing] = future
+
+      override val isFatal: Boolean = true
+    }
+  }
 
   final def sequence[E <: Throwable, A](results: Seq[IO[E, A]])(implicit
     ec: ExecutionContext
   ): IO[E, Seq[A]] =
-    IO(StdFuture.sequence(results.map(_.toFuture)))
+    IO(StdFuture.sequence(results.map(_.toFuture)), fatal = false)
 
   val unit = IO.successful(())
 }

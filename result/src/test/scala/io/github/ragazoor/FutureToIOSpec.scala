@@ -1,9 +1,9 @@
 package io.github.ragazoor
 
+import io.github.ragazoor.implicits._
 import munit.FunSuite
 
 import scala.concurrent.{ Future => StdFuture }
-import implicits._
 
 class FutureToIOSpec extends FunSuite {
 
@@ -12,7 +12,7 @@ class FutureToIOSpec extends FunSuite {
   override def munitValueTransforms = super.munitValueTransforms ++ List(
     new ValueTransform(
       "IO",
-      { case IO(future) =>
+      { case IO(future, _) =>
         future
       }
     )
