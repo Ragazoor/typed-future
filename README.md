@@ -16,8 +16,8 @@ However if you do not want to commit to another effect system and
 still want complete control of your types this library is for you.
 
 # Installation
-[!NOTE]
-Due to the new sonatype interace the library is not yet available 
+> [!NOTE]
+> Due to the new sonatype interace the library is not yet available 
 in maven central.
 
 Setup via `build.sbt`:
