@@ -31,11 +31,11 @@ sealed trait IO[+E <: Throwable, +A] extends Awaitable[A] {
   def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): IO[E2, A] = {
     var isFutureFatal     = isFatal
     val transformedFuture = self.toFuture.transform {
-      case Failure(e) if NonFatal(e) && !isFatal  => Failure(f(e.asInstanceOf[E]))
+      case Failure(e) if NonFatal(e) && !isFatal => Failure(f(e.asInstanceOf[E]))
       case Failure(e) if !NonFatal(e) || isFatal =>
         isFutureFatal = true
         Failure(e)
-      case success                                => success
+      case success                               => success
     }
     IO[E2, A](transformedFuture, isFutureFatal)
   }
