@@ -13,7 +13,7 @@ lazy val root =
   project
     .in(file("."))
     .settings(publish / skip := true)
-    .aggregate(result, benchmark)
+    .aggregate(result, benchmark, examples)
 
 lazy val result = module("attempt", "result")
   .enablePlugins(BuildInfoPlugin)

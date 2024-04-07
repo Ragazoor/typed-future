@@ -141,6 +141,7 @@ trait UserRepository {
 }
 
 final case class UserNotFound(msg: String, cause: Throwable) extends Exception(msg, cause)
+
 final case class UnrecoverableError(msg: String, cause: Throwable) extends Exception(msg, cause)
 
 class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
@@ -163,12 +164,13 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
 
 The goal of the library is not to replace everything in `scala.concurrent.*`
 since this would require a re-implementation of several key components. The
-goal is rather to provide a typed alternative to the Future and 
+goal is rather to provide a typed alternative to the Future and
 use the rest from the standard library.
 
 The migration depends on how much of the `scala.concurrent` library you are
 using. This example is for a migration where the project is only using
 ExecutionContext and Future from `scala.concurrent`.
+
 ```text
 replace: 
 import scala.concurrent.*
@@ -194,13 +196,17 @@ There are a few occurrences where we need to manually fix the code:
   it explicit:
 
 ```scala
-implicit class MyImplicitClassFunction(f: StdFuture[Int]) {
-  def bar: StdFuture[Option[Int]] = f.map(Some(_))
-}
+object ImplicitClassExample {
+  implicit class MyImplicitClassFunction(f: StdFuture[Int])(implicit ec: ExecutionContext) {
+    def bar: StdFuture[Option[Int]] = f.map(Some(_))
+  }
 
-def foo: IO[Throwable, Int] = ???
-val a: IO[Throwable, Option[Int]] = foo.bar.io // does not compile
-val a: IO[Throwable, Option[Int]] = foo.toFuture.bar.io // compiles
+  import scala.concurrent.ExecutionContext.Implicits.global
+  def foo: Attempt[Throwable, Int] = ???
+  
+  val a: Attempt[Throwable, Option[Int]] = foo.bar.attempt // does not compile
+  val b: Attempt[Throwable, Option[Int]] = foo.toFuture.bar.attempt
+}
 ```
 
 ## Benchmarks

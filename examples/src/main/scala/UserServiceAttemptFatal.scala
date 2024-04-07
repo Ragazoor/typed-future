@@ -1,19 +1,11 @@
 import io.github.ragazoor.Attempt
 import io.github.ragazoor.implicits._
 
-import scala.concurrent.{ ExecutionContext, Future => StdFuture }
-
-case class User(name: String, age: Int)
-
-trait UserRepository {
-  def getUser(id: Int): StdFuture[User]
-}
-
-final case class UserNotFound(msg: String, cause: Throwable) extends Exception(msg, cause)
+import scala.concurrent.ExecutionContext
 
 final case class UnrecoverableError(msg: String, cause: Throwable) extends Exception(msg, cause)
 
-class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
+class UserServiceAttemptFatal(userRepo: UserRepository)(implicit ec: ExecutionContext) {
   def getUser(id: Int): Attempt[UserNotFound, User] =
     if (id < 0) {
       /*
