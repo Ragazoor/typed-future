@@ -41,8 +41,8 @@ sbt test
 ## Examples
 
 ```scala
-import scala.concurrent.{Future => StdFuture}
-import io.github.ragazoor.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import io.github.ragazoor.Future
 import io.github.ragazoor.implicits._
 
 case class User(name: String, age: Int)
@@ -58,10 +58,14 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
       .io // Converts to IO
 }
 ```
+In `io.github.ragazoor.migration.implicits._` there are implicits that
+are used to convert an `IO` to a `Future`. This is useful in a migration 
+phase when you have a third party library which depends on getting a 
+`Future`.
 
 ```scala
-import scala.concurrent.{Future => StdFuture}
-import io.github.ragazoor.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import io.github.ragazoor.Future
 import io.github.ragazoor.implicits._
 import io.github.ragazoor.migration.implicits._
 
