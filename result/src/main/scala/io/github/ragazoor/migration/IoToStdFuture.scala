@@ -2,7 +2,7 @@ package io.github.ragazoor.migration
 
 import io.github.ragazoor.Attempt
 
-import scala.concurrent.{Future => StdFuture}
+import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
 
 trait IoToStdFuture {
@@ -244,7 +244,29 @@ trait IoToStdFuture {
     X21,
     B
   ](
-    f21: (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X17, X18, X19, X20, X21) => Attempt[E, B]
+    f21: (
+      X1,
+      X2,
+      X3,
+      X4,
+      X5,
+      X6,
+      X7,
+      X8,
+      X9,
+      X10,
+      X11,
+      X12,
+      X13,
+      X14,
+      X15,
+      X16,
+      X17,
+      X18,
+      X19,
+      X20,
+      X21
+    ) => Attempt[E, B]
   ): (X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16, X17, X18, X19, X20, X21) => StdFuture[B] =
     (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21) =>
       f21(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21).toFuture

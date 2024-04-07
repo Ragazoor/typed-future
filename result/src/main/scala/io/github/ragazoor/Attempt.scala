@@ -1,12 +1,12 @@
 package io.github.ragazoor
 
-import io.github.ragazoor.AttemptUtils.{failedFailure, zipWithTuple2Fun}
+import io.github.ragazoor.AttemptUtils.{ failedFailure, zipWithTuple2Fun }
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, TimeoutException, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 sealed trait Attempt[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
@@ -46,12 +46,12 @@ sealed trait Attempt[+E <: Throwable, +A] extends Awaitable[A] {
     zipWith(that)(zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: Attempt[E2, U])(f: (A, U) => R)(implicit
-                                                                                ec: ExecutionContext
+    ec: ExecutionContext
   ): Attempt[E2, R] =
     Attempt(self.toFuture.zipWith(that.toFuture)(f), isFatal || that.isFatal)
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Attempt[E2, A2])(implicit
-                                                                       ec: ExecutionContext
+    ec: ExecutionContext
   ): Attempt[E2, A2] = {
     var isFutureFatal     = isFatal
     val transformedFuture = self.toFuture.transformWith {
@@ -65,7 +65,7 @@ sealed trait Attempt[+E <: Throwable, +A] extends Awaitable[A] {
   }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Attempt[E2, A2]])(implicit
-                                                                                        ec: ExecutionContext
+    ec: ExecutionContext
   ): Attempt[E2, A2] = {
     val transformedFuture = self.toFuture.transformWith {
       case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) && !isFatal =>
@@ -98,7 +98,7 @@ sealed trait Attempt[+E <: Throwable, +A] extends Awaitable[A] {
     Attempt(self.toFuture.transform(f), isFatal)
 
   def transformWith[E2 >: E <: Throwable, B](f: Try[A] => Attempt[E2, B])(implicit
-                                                                          executor: ExecutionContext
+    executor: ExecutionContext
   ): Attempt[E2, B] =
     Attempt(self.toFuture.transformWith(f(_).toFuture), isFatal)
 
@@ -166,7 +166,7 @@ object Attempt {
   }
 
   final def sequence[E <: Throwable, A](results: Seq[Attempt[E, A]])(implicit
-                                                                     ec: ExecutionContext
+    ec: ExecutionContext
   ): Attempt[E, Seq[A]] =
     Attempt(StdFuture.sequence(results.map(_.toFuture)), fatal = false)
 

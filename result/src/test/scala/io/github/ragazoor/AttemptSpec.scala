@@ -2,7 +2,7 @@ package io.github.ragazoor
 
 import munit.FunSuite
 
-import scala.concurrent.{Future => StdFuture}
+import scala.concurrent.{ Future => StdFuture }
 import scala.util.Try
 
 class AttemptSpec extends FunSuite {
@@ -170,13 +170,15 @@ class AttemptSpec extends FunSuite {
   }
 
   test("Future.mapEither") {
-    Attempt.successful(1)
+    Attempt
+      .successful(1)
       .mapEither(_ => Right(2))
       .map(result => assert(result == 2))
   }
 
   test("Future.mapEither, with typed error") {
-    Attempt.successful(1)
+    Attempt
+      .successful(1)
       .mapEither[RuntimeException, Int](_ => Left(new RuntimeException("Test message")))
       .map(_ => assert(false))
       .catchSome { case _: RuntimeException =>
@@ -185,7 +187,8 @@ class AttemptSpec extends FunSuite {
   }
 
   test("Future.mapTry") {
-    Attempt.successful(1)
+    Attempt
+      .successful(1)
       .mapTry(_ => Try(2))
       .map(result => assert(result == 2))
   }
