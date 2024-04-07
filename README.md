@@ -90,7 +90,7 @@ class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
 
 This is the basics of how to enable the use of a typed future in
 your future based code. The `IO` has the same API
-as the `StdFuture`, and thanks to the type alias
+as the `Future`, and thanks to the type alias
 `type Future[+A] = IO[Throwable, A]` we don't need to rename `Future`s
 all over the code base.
 
