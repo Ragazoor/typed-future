@@ -16,9 +16,10 @@ However if you do not want to commit to another effect system and
 still want complete control of your types this library is for you.
 
 # Installation
+
 > [!NOTE]
-> Due to the new sonatype interace the library is not yet available 
-in maven central.
+> Due to the new sonatype interace the library is not yet available
+> in maven central.
 
 Setup via `build.sbt`:
 
@@ -41,9 +42,10 @@ sbt test
 ## Examples
 
 ```scala
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
 import io.github.ragazoor.Future
 import io.github.ragazoor.implicits._
+
+import scala.concurrent.{Future => StdFuture}
 
 case class User(name: String, age: Int)
 
@@ -51,16 +53,17 @@ trait UserRepository {
   def getUser(id: Int): StdFuture[User]
 }
 
-class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
-  def getUser(id: Int): Future[User] = // Future[User] is an alias for IO[Throwable, User] 
+class UserService(userRepo: UserRepository) {
+  def getUser(id: Int): Future[User] = // Future[User] is an alias for Attempt[Throwable, User]
     userRepo
       .getUser(id)
-      .io // Converts to IO
+      .attempt // Converts to Attempt
 }
 ```
+
 In `io.github.ragazoor.migration.implicits._` there are implicits that
-are used to convert an `IO` to a `Future`. This is useful in a migration 
-phase when you have a third party library which depends on getting a 
+are used to convert an `IO` to a `Future`. This is useful in a migration
+phase when you have a third party library which depends on getting a
 `Future`.
 
 ```scala
@@ -78,10 +81,10 @@ trait UserRepository {
 class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
   // implicit conversion in io.github.ragazoor.migration.implicits._ 
   // converts the IO to a Future
-  
-  def getUser(id: Int): StdFuture[User] = 
+
+  def getUser(id: Int): StdFuture[User] =
     userRepo.getUser(id)
-    
+
   // Does the same thing without implicits, but more migration needed
   def getUserExplicit(id: Int): StdFuture[User] =
     userRepo.getUser(id).toFuture
@@ -100,51 +103,78 @@ Using the example above it is now trivial to map a failed `StdFuture`
 to an `IO` with an error from our domain model.
 
 ```scala 
-case class UserNotFound(message: String, cause: Throwable) extends Exception(message, cause)
+import io.github.ragazoor.Attempt
+import io.github.ragazoor.implicits._
 
-object UserNotFound {
-  def apply(id: Int)(cause: Throwable): UserNotFound = UserNotFound(s"User with id $id not found", cause)
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
+
+case class User(name: String, age: Int)
+
+trait UserRepository {
+  def getUser(id: Int): StdFuture[User]
 }
 
+final case class UserNotFound(msg: String, cause: Throwable) extends Exception(msg, cause)
+
 class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
-  def getUser(id: Int): IO[UserNotFound, User] = // Future[User] is an alias for IO[Throwable, User]
+  def getUser(id: Int): Attempt[UserNotFound, User] =
     userRepo
       .getUser(id)
-      .io // Converts to IO
-      .mapError(UserNotFound(id))
+      .attempt // Converts to Attempt
+      .mapError(e => UserNotFound(s"User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
+}
 ```
 
 Similar to `ZIO` it is also possible to create IO's with errors that we cannot
 recover from, except with a few methods like `catch` and `recover`. This is done by using `IO.fatal`:
 
 ```scala
-case class UnrecoverableError(message: String, cause: Throwable) extends Exception(message, cause)
+import io.github.ragazoor.Attempt
+import io.github.ragazoor.implicits._
+
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
+
+case class User(name: String, age: Int)
+
+trait UserRepository {
+  def getUser(id: Int): StdFuture[User]
+}
+
+final case class UserNotFound(msg: String, cause: Throwable) extends Exception(msg, cause)
+final case class UnrecoverableError(msg: String, cause: Throwable) extends Exception(msg, cause)
 
 class UserService(userRepo: UserRepository)(implicit ec: ExecutionContext) {
-  def getUser(id: Int): IO[UserNotFound, User] =
+  def getUser(id: Int): Attempt[UserNotFound, User] =
     if (id < 0) {
-      IO.fatal(UnrecoverableError("Not best example but lets say this is a fatal error", new RuntimeException("Fatal error")))
-    } else {
+      /*
+       * Creates an Attempt[Nothing, Nothing] with a fatal error which should not be recovered.
+       * This method can only be handled using the `recover` or `recoverWith` methods.
+       */
+      Attempt.fatal(UnrecoverableError("This error cannot be caught with e.g. mapError", new Exception("Fatal error")))
+    } else
       userRepo
         .getUser(id)
-        .io // Converts to IO
-        .mapError(UserNotFound(id))
-    }
+        .attempt // Converts to Attempt
+        .mapError(e => UserNotFound(s"User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
 }
 ```
 
 ## Migration
 
-The goal is to eventually be able to replace `scala.concurrent`, however
-not everything is available yet. If you are only using `StdFuture`,
-`ExecutionContext` and `NonFatal` you can use the following to migrate
-most of the code:
+The goal of the library is not to replace everything in `scala.concurrent.*`
+since this would require a re-implementation of several key components. The
+goal is rather to provide a typed alternative to the Future and 
+use the rest from the standard library.
 
+The migration depends on how much of the `scala.concurrent` library you are
+using. This example is for a migration where the project is only using
+ExecutionContext and Future from `scala.concurrent`.
 ```text
 replace: 
-import.scala.concurrent.*
+import scala.concurrent.*
 
 with: 
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
 import io.github.ragazoor.*
 import io.github.ragazoor.implicits.*
 import io.github.ragazoor.migration.implicits.*
@@ -153,13 +183,13 @@ import io.github.ragazoor.migration.implicits.*
 There are a few occurrences where we need to manually fix the code:
 
 - If we are using a third-party library returning a `scala.concurrent.Future`
-  we need to convert it to `IO` using `.io` and the implicit in
-  `ragazoor.implicits.*`.
+  we need to convert it to `IO` using `.io` and the implicit
+  `io.github.ragazoor.implicits.StdFutureToIO`.
 - If there are async tests using `scala.concurrent.Future` but does not
-  have `scala.concurrent` in imported we need to add
-  `import io.github.ragazoor.migration.implicits.*`.
-- If you are using implicit classes that uses the 
-  `StdFuture` the compiler will not be able to convert
+  have `scala.concurrent` imported we need to add
+  `import io.github.ragazoor.migration.implicits._`.
+- If you are using implicit classes that extends `scala.concurrent.Future`
+  the compiler will not be able to convert
   like one might think using the migration implicits. So we need to make
   it explicit:
 

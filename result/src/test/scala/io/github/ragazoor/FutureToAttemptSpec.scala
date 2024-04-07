@@ -22,7 +22,7 @@ class FutureToAttemptSpec extends FunSuite {
       result <- StdFuture(1)
     } yield assert(result == 1)
 
-    result.io
+    result.attempt
   }
 
 }
