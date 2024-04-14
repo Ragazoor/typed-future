@@ -13,7 +13,7 @@ If you are already used to working with typed errors I would highly
 recommend checking out [ZIO](https://zio.dev/overview/getting-started)
 or [Monix BIO](https://bio.monix.io/docs/introduction) instead.
 However if you do not want to commit to another effect system and
-still want complete control of your types this library is for you.
+still want typed errors feel free to use this library.
 
 # Installation
 
