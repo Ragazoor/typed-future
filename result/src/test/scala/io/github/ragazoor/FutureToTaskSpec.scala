@@ -3,16 +3,16 @@ package io.github.ragazoor
 import io.github.ragazoor.implicits._
 import munit.FunSuite
 
-import scala.concurrent.{ Future => StdFuture }
+import scala.concurrent.{Future => StdFuture}
 
-class FutureToAttemptSpec extends FunSuite {
+class FutureToTaskSpec extends FunSuite {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def munitValueTransforms = super.munitValueTransforms ++ List(
     new ValueTransform(
       "Attempt",
-      { case Attempt(future, _) =>
+      { case Task(future) =>
         future
       }
     )
@@ -22,7 +22,7 @@ class FutureToAttemptSpec extends FunSuite {
       result <- StdFuture(1)
     } yield assert(result == 1)
 
-    result.attempt
+    result.toTask
   }
 
 }

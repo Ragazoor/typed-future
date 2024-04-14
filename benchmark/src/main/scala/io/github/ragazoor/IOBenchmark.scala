@@ -21,7 +21,7 @@ class IOBenchmark {
     r.get.isInstanceOf[Success[T]]
   }
 
-  protected final def await[E <: Throwable, T](result: Attempt[E, T]): Boolean = {
+  protected final def await[E <: Throwable, T](result: Task[E, T]): Boolean = {
     var r: Option[Try[T]] = None
     while (r eq None) r = result.value
     r.get.isInstanceOf[Success[T]]
@@ -31,7 +31,7 @@ class IOBenchmark {
     await(StdFuture.sequence(input.map(StdFuture.successful)))
 
   @Benchmark def resultSequence: Boolean =
-    await(Attempt.sequence(input.map(Attempt.successful)))
+    await(Task.sequence(input.map(Task.successful)))
 
   @tailrec private[this] final def futureFlatMapRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -42,14 +42,14 @@ class IOBenchmark {
   @Benchmark final def futureFlatMap: Boolean =
     await(futureFlatMapRec(recursion, StdFuture.successful(1)))
 
-  @tailrec private[this] final def resultFlatMapRec(i: Int, f: Attempt[Nothing, Int])(implicit
-    ec: ExecutionContext
-  ): Attempt[Nothing, Int] =
-    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Attempt.successful)(ec))(ec)
+  @tailrec private[this] final def resultFlatMapRec(i: Int, f: Task[Nothing, Int])(implicit
+                                                                                   ec: ExecutionContext
+  ): Task[Nothing, Int] =
+    if (i > 0) resultFlatMapRec(i - 1, f.flatMap(Task.successful)(ec))(ec)
     else f
 
   @Benchmark final def resultFlatMap: Boolean =
-    await(resultFlatMapRec(recursion, Attempt.successful(1)))
+    await(resultFlatMapRec(recursion, Task.successful(1)))
 
   @tailrec private[this] final def futureMapRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -60,14 +60,14 @@ class IOBenchmark {
   @Benchmark final def futureMap: Boolean =
     await(futureMapRec(recursion, StdFuture.successful(1)))
 
-  @tailrec private[this] final def resultMapRec(i: Int, f: Attempt[Nothing, Int])(implicit
-    ec: ExecutionContext
-  ): Attempt[Nothing, Int] =
+  @tailrec private[this] final def resultMapRec(i: Int, f: Task[Nothing, Int])(implicit
+                                                                               ec: ExecutionContext
+  ): Task[Nothing, Int] =
     if (i > 0) resultMapRec(i - 1, f.map(identity)(ec))(ec)
     else f
 
   @Benchmark final def resultMap: Boolean =
-    await(resultMapRec(recursion, Attempt.successful(1)))
+    await(resultMapRec(recursion, Task.successful(1)))
 
   @tailrec private[this] final def futureRecoverWithRec(i: Int, f: StdFuture[Int])(implicit
     ec: ExecutionContext
@@ -75,9 +75,9 @@ class IOBenchmark {
     if (i > 0) futureRecoverWithRec(i - 1, f.recoverWith(e => StdFuture.failed(e))(ec))(ec)
     else f
 
-  @tailrec private[this] final def resultMapErrorRec(i: Int, f: Attempt[RuntimeException, Int])(implicit
-    ec: ExecutionContext
-  ): Attempt[RuntimeException, Int] =
+  @tailrec private[this] final def resultMapErrorRec(i: Int, f: Task[RuntimeException, Int])(implicit
+                                                                                             ec: ExecutionContext
+  ): Task[RuntimeException, Int] =
     if (i > 0) resultMapErrorRec(i - 1, f.mapError(identity)(ec))(ec)
     else f
 
@@ -85,5 +85,5 @@ class IOBenchmark {
     await(futureRecoverWithRec(recursion, StdFuture.failed[Int](new RuntimeException("Future error"))))
 
   @Benchmark final def resultMapError: Boolean =
-    await(resultMapErrorRec(recursion, Attempt.failed(new RuntimeException("Result error"))))
+    await(resultMapErrorRec(recursion, Task.failed(new RuntimeException("Result error"))))
 }
