@@ -1,6 +1,6 @@
 package examples
 
-import common.{User, UserRepository}
+import common.{ User, UserRepository }
 import io.github.ragazoor.Future
 import io.github.ragazoor.implicits.StdFutureToTask
 

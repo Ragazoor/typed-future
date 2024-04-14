@@ -1,12 +1,12 @@
 package io.github.ragazoor
 
-import io.github.ragazoor.TaskUtils.{failedFailure, zipWithTuple2Fun}
+import io.github.ragazoor.TaskUtils.{ failedFailure, zipWithTuple2Fun }
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, TimeoutException, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
@@ -43,12 +43,12 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
     zipWith(that)(zipWithTuple2Fun)(parasitic)
 
   def zipWith[E2 >: E <: Throwable, U, R](that: Task[E2, U])(f: (A, U) => R)(implicit
-                                                                             ec: ExecutionContext
+    ec: ExecutionContext
   ): Task[E2, R] =
     Task(self.toFuture.zipWith(that.toFuture)(f))
 
   def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Task[E2, A2])(implicit
-                                                                    ec: ExecutionContext
+    ec: ExecutionContext
   ): Task[E2, A2] = {
     val transformedFuture = self.toFuture.transformWith {
       case Failure(e) if NonFatal(e)  => f(e.asInstanceOf[E]).toFuture
@@ -60,7 +60,7 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   }
 
   def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Task[E2, A2]])(implicit
-                                                                                     ec: ExecutionContext
+    ec: ExecutionContext
   ): Task[E2, A2] = {
     val transformedFuture = self.toFuture.transformWith {
       case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
@@ -93,7 +93,7 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
     Task(self.toFuture.transform(f))
 
   def transformWith[E2 >: E <: Throwable, B](f: Try[A] => Task[E2, B])(implicit
-                                                                       executor: ExecutionContext
+    executor: ExecutionContext
   ): Task[E2, B] = {
     val transformedFuture = toFuture.transformWith { value =>
       val newAttempt = f(value)
@@ -118,7 +118,7 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
     Task(toFuture.recover(pf)).asInstanceOf[Task[E, B]]
 
   def recoverWith[B >: A](pf: PartialFunction[Throwable, Task[Throwable, B]])(implicit
-                                                                              executor: ExecutionContext
+    executor: ExecutionContext
   ): Task[Throwable, B] =
     Task(toFuture.recoverWith(pf.andThen(_.toFuture)))
 
@@ -160,7 +160,7 @@ object Task {
   }
 
   final def sequence[E <: Throwable, A](results: Seq[Task[E, A]])(implicit
-                                                                  ec: ExecutionContext
+    ec: ExecutionContext
   ): Task[E, Seq[A]] =
     Task(StdFuture.sequence(results.map(_.toFuture)))
 

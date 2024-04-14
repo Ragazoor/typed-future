@@ -3,9 +3,9 @@ package examples
 import common.User
 import io.github.ragazoor.implicits.StdFutureToTask
 import io.github.ragazoor.migration.implicits._
-import io.github.ragazoor.{Future, Task}
+import io.github.ragazoor.{ Future, Task }
 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 
 /*
  * Imagine this is in a third party library

@@ -3,7 +3,7 @@ package examples
 import io.github.ragazoor.Task
 import io.github.ragazoor.implicits.StdFutureToTask
 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 
 object ImplicitClassExample {
   implicit class MyImplicitClassFunction[A](f: StdFuture[A])(implicit ec: ExecutionContext) {

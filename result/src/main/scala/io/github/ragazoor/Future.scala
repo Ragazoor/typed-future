@@ -1,6 +1,6 @@
 package io.github.ragazoor
 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 import scala.util.Try
 
 /*
@@ -30,7 +30,7 @@ object Future {
     Task.failed(exception)
 
   final def sequence[E <: Throwable, A](results: Seq[Task[E, A]])(implicit
-                                                                  ec: ExecutionContext
+    ec: ExecutionContext
   ): Task[E, Seq[A]] =
     Task.sequence(results)
 
