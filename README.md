@@ -183,9 +183,9 @@ Example benchmark
 [info] FutureBenchmark.futureMap       thrpt   10  27.629 ± 0.490  ops/s
 [info] FutureBenchmark.futureRecover   thrpt   10  24.488 ± 0.415  ops/s
 [info] FutureBenchmark.futureSequence  thrpt   10   2.004 ± 0.203  ops/s
-[info] FutureBenchmark.ioFlatMap       thrpt   10  22.395 ± 0.375  ops/s
-[info] FutureBenchmark.ioMap           thrpt   10  27.328 ± 0.455  ops/s
-[info] FutureBenchmark.ioMapError      thrpt   10  27.177 ± 0.041  ops/s
-[info] FutureBenchmark.ioSequence      thrpt   10   1.817 ± 0.029  ops/s
+[info] FutureBenchmark.taskFlatMap       thrpt   10  22.395 ± 0.375  ops/s
+[info] FutureBenchmark.taskMap           thrpt   10  27.328 ± 0.455  ops/s
+[info] FutureBenchmark.taskMapError      thrpt   10  27.177 ± 0.041  ops/s
+[info] FutureBenchmark.taskSequence      thrpt   10   1.817 ± 0.029  ops/s
 [success] Total time: 1623 s (27:03), completed Feb 20, 2024, 7:02:20 PM
 ```
