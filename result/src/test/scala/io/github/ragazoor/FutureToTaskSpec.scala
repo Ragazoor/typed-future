@@ -5,14 +5,14 @@ import munit.FunSuite
 
 import scala.concurrent.{ Future => StdFuture }
 
-class FutureToIOSpec extends FunSuite {
+class FutureToTaskSpec extends FunSuite {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def munitValueTransforms = super.munitValueTransforms ++ List(
     new ValueTransform(
-      "IO",
-      { case IO(future, _) =>
+      "Attempt",
+      { case Task(future) =>
         future
       }
     )
@@ -22,7 +22,7 @@ class FutureToIOSpec extends FunSuite {
       result <- StdFuture(1)
     } yield assert(result == 1)
 
-    result.io
+    result.toTask
   }
 
 }

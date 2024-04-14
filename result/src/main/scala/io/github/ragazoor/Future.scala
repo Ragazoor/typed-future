@@ -8,32 +8,32 @@ import scala.util.Try
  */
 object Future {
 
-  def unapply[E <: Throwable, A](result: IO[E, A]): Option[StdFuture[A]] =
-    IO.unapply(result).map(_._1)
+  def unapply[E <: Throwable, A](result: Task[E, A]): Option[StdFuture[A]] =
+    Task.unapply(result)
 
-  final def apply[A](body: => A)(implicit ec: ExecutionContext): IO[Throwable, A] =
-    IO[Throwable, A](StdFuture(body), fatal = false)
+  final def apply[A](body: => A)(implicit ec: ExecutionContext): Task[Throwable, A] =
+    Task[Throwable, A](StdFuture(body))
 
-  final def fromFuture[A](future: StdFuture[A]): IO[Throwable, A] =
-    IO.fromFuture(future)
+  final def fromFuture[A](future: StdFuture[A]): Task[Throwable, A] =
+    Task.fromFuture(future)
 
-  final def fromEither[E <: Throwable, A](either: Either[E, A]): IO[E, A] =
-    IO.fromEither(either)
+  final def fromEither[E <: Throwable, A](either: Either[E, A]): Task[E, A] =
+    Task.fromEither(either)
 
-  final def fromTry[A](body: Try[A]): IO[Throwable, A] =
-    IO.fromTry(body)
+  final def fromTry[A](body: Try[A]): Task[Throwable, A] =
+    Task.fromTry(body)
 
-  final def successful[A](value: A): IO[Nothing, A] =
-    IO.successful(value)
+  final def successful[A](value: A): Task[Nothing, A] =
+    Task.successful(value)
 
-  final def failed[E <: Exception](exception: E): IO[E, Nothing] =
-    IO.failed(exception)
+  final def failed[E <: Exception](exception: E): Task[E, Nothing] =
+    Task.failed(exception)
 
-  final def sequence[E <: Throwable, A](results: Seq[IO[E, A]])(implicit
+  final def sequence[E <: Throwable, A](results: Seq[Task[E, A]])(implicit
     ec: ExecutionContext
-  ): IO[E, Seq[A]] =
-    IO.sequence(results)
+  ): Task[E, Seq[A]] =
+    Task.sequence(results)
 
-  val unit = IO.unit
+  val unit = Task.unit
 
 }

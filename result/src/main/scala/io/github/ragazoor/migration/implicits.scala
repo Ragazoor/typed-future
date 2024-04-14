@@ -1,12 +1,13 @@
 package io.github.ragazoor.migration
 
+import io.github.ragazoor.Task
+
 import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
-import io.github.ragazoor.IO
 
-object implicits extends IoToStdFuture {
+object implicits extends TaskToStdFuture {
 
-  implicit def ioToStdFuture[E <: Throwable, A](io: IO[E, A]): StdFuture[A] =
+  implicit def ioToStdFuture[E <: Throwable, A](io: Task[E, A]): StdFuture[A] =
     io.toFuture
 
 }
