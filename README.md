@@ -1,7 +1,7 @@
 # An error typed Future
 
-A Future based monad with typed errors.
-Designed to be a replacement for the `scala.concurrent.Future`
+A thin wrapper on the Future monad for the purpose of giving it an error type.
+Designed to be an alternative for the `scala.concurrent.Future`
 (I'll call it StdFuture here) with minimal migration needed. Entirely built on top
 of the StdFuture, it has
 the same performance and easily integrates into existing StdFuture
@@ -13,7 +13,7 @@ If you are already used to working with typed errors I would highly
 recommend checking out [ZIO](https://zio.dev/overview/getting-started)
 or [Monix BIO](https://bio.monix.io/docs/introduction) instead.
 However if you do not want to commit to another effect system and
-still want typed errors feel free to use this library.
+still want typed errors feel free to use this library. There also isn't much code and you are free to copy it!
 
 # Installation
 
