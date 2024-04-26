@@ -29,17 +29,28 @@ libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.0"
 
 # Getting Started
 
+In this library the main monad is called a `Task`, which has the type signature `Task[+E, +A]`.
+This task is just a thin wrapper on top of the future monad, which we have defined here as the
+type alias `type Future[+A] = Task[Throwable, A]`. This is due to convenience so that there is 
+less migration needed.
 ## Examples
 
+In `io.github.ragazoor.implicits._` there is an implicit class that
+allows you to convert from an `StdFuture` to a `Task` using `.toTask`.
 ```scala
-import common.{User, UserRepository}
+import common.User
 import io.github.ragazoor.Future
 import io.github.ragazoor.implicits.StdFutureToTask
 
-class UserServiceExample(userRepo: UserRepository) {
+import scala.concurrent.Future as StdFuture
+
+trait UserRepository {
+  def getUser(id: Int): StdFuture[User]
+
+class UserExample(userRepo: UserRepository) {
   def getUser(id: Int): Future[User] = // Future[User] is an alias for Task[Throwable, User]
     userRepo
-      .getUser(id)
+      .getUser(id)  // This returns a StdFuture
       .toTask // Converts to Task
 }
 ```
@@ -48,7 +59,6 @@ In `io.github.ragazoor.migration.implicits._` there are implicits that
 are used to convert an `Task` to a `StdFuture`. This is useful in a migration
 phase when you have a third party library which depends on getting a
 `StdFuture`.
-
 ```scala
 import common.User
 import io.github.ragazoor.Task
@@ -62,24 +72,17 @@ import scala.concurrent.{ExecutionContext, Future => StdFuture}
  * Imagine this is in a third party library
  */
 trait UserProcess {
-  def process(id: StdFuture[User]): StdFuture[User]
+  def process(id: StdFuture[User]): StdFuture[User]  // Works with StdFutures
 }
 
 class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionContext) {
 
-  /* implicit conversion in io.github.ragazoor.migration.implicits._ converts
-   * the Task to a Future
-   */
-  def getUser(id: Int): Future[User] =
-    userProcess.process {
-      Task.successful(User("Test name", 44))
-    }.toTask
+  def processUser(user: Task[User]): Task[Throwable, User] =
+    userProcess.process(user).toTask  // Here Task -> Future conversion is implicit
 
   // Does the same thing without implicits, but more migration needed
-  def getUserExplicit(id: Int): Future[User] =
-    userProcess.process {
-      Task.successful(User("Test name", 44)).toFuture // Here the conversion to future is explicit
-    }.toTask
+  def processUser2(id: Int): Task[Throwable, User] =
+    userProcess.process(user.toFuture).toTask  // Here Task -> Future conversion is explicit
 }
 
 ```
@@ -106,9 +109,9 @@ import scala.concurrent.ExecutionContext
 class UserServiceTaskExample(userRepo: UserRepository)(implicit ec: ExecutionContext) {
   def getUser(id: Int): Task[UserNotFound, User] =
     userRepo
-            .getUser(id)
-            .toTask // Converts to Task
-            .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
+      .getUser(id)  // Returns a StdFuture
+      .toTask // Converts to Task
+      .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
 }
 ```
 
