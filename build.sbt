@@ -29,7 +29,7 @@ lazy val examples = module("examples", "examples")
   .settings(stdSettings("examples"))
   .dependsOn(result)
 
-lazy val benchmark = module("typed-future-benchmark", "benchmark")
+lazy val benchmark = module("benchmark", "benchmark")
   .enablePlugins(BuildInfoPlugin, JmhPlugin)
   .settings(buildInfoSettings("io.github.ragazoor"))
   .settings(libraryDependencies += munit % Test)
