@@ -5,6 +5,7 @@ import io.github.ragazoor.TaskUtils.{ failedFailure, zipWithTuple2Fun }
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
+import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.util.{ Failure, Success, Try }
 
@@ -17,27 +18,11 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   def map[B](f: A => B)(implicit ec: ExecutionContext): Task[E, B] =
     Task(self.toFuture.transform(_ map f))
 
-  def mapTry[B](f: A => Try[B])(implicit ec: ExecutionContext): Task[Throwable, B] =
-    Task(self.toFuture.transform(_ flatMap f))
-
-  def mapEither[E2 >: E <: Throwable, B](f: A => Either[E2, B])(implicit ec: ExecutionContext): Task[E2, B] =
-    Task(self.toFuture.transform(_ flatMap (f(_).toTry)))
-
   def flatMap[E2 >: E <: Throwable, B](f: A => Task[E2, B])(implicit ec: ExecutionContext): Task[E2, B] =
     Task(self.toFuture.flatMap(f(_).toFuture))
 
   def flatten[E2 >: E <: Throwable, B](implicit ev: A <:< Task[E2, B]): Task[E2, B] =
     flatMap(ev)(parasitic)
-
-  def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): Task[E2, A] = {
-    val transformedFuture = self.toFuture.transform {
-      case Failure(e) if NonFatal(e)  => Failure(f(e.asInstanceOf[E]))
-      case Failure(e) if !NonFatal(e) =>
-        Failure(e)
-      case success                    => success
-    }
-    Task[E2, A](transformedFuture)
-  }
 
   def zip[E2 >: E <: Throwable, B](that: Task[E2, B]): Task[E2, (A, B)] =
     zipWith(that)(zipWithTuple2Fun)(parasitic)
@@ -46,30 +31,6 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
     ec: ExecutionContext
   ): Task[E2, R] =
     Task(self.toFuture.zipWith(that.toFuture)(f))
-
-  def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Task[E2, A2])(implicit
-    ec: ExecutionContext
-  ): Task[E2, A2] = {
-    val transformedFuture = self.toFuture.transformWith {
-      case Failure(e) if NonFatal(e)  => f(e.asInstanceOf[E]).toFuture
-      case Failure(e) if !NonFatal(e) =>
-        self.toFuture
-      case _                          => self.toFuture
-    }
-    Task[E2, A2](transformedFuture)
-  }
-
-  def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Task[E2, A2]])(implicit
-    ec: ExecutionContext
-  ): Task[E2, A2] = {
-    val transformedFuture = self.toFuture.transformWith {
-      case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
-        pf(e.asInstanceOf[E]).toFuture
-      case _                                                              =>
-        self.toFuture
-    }
-    Task[E2, A2](transformedFuture)
-  }
 
   private final def failedFun[B](v: Try[B]): Try[E] =
     v match {
@@ -94,13 +55,8 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
 
   def transformWith[E2 >: E <: Throwable, B](f: Try[A] => Task[E2, B])(implicit
     executor: ExecutionContext
-  ): Task[E2, B] = {
-    val transformedFuture = toFuture.transformWith { value =>
-      val newAttempt = f(value)
-      newAttempt.toFuture
-    }
-    Task(transformedFuture)
-  }
+  ): Task[E2, B] =
+    Task(self.toFuture.transformWith(f(_).toFuture))
 
   @throws(classOf[TimeoutException])
   @throws(classOf[InterruptedException])
@@ -122,6 +78,55 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   ): Task[Throwable, B] =
     Task(toFuture.recoverWith(pf.andThen(_.toFuture)))
 
+  def fallbackTo[B >: A](that: Future[B]): Future[B] =
+    Task(toFuture.fallbackTo(that.toFuture))
+
+  def mapTo[B](implicit tag: ClassTag[B]): Future[B] =
+    Task(toFuture.mapTo)
+
+  /*
+   * ------------------- EXTENSION EXTRA  -------------------
+   */
+
+  def mapTry[B](f: A => Try[B])(implicit ec: ExecutionContext): Task[Throwable, B] =
+    Task(self.toFuture.transform(_ flatMap f))
+
+  def mapEither[E2 >: E <: Throwable, B](f: A => Either[E2, B])(implicit ec: ExecutionContext): Task[E2, B] =
+    Task(self.toFuture.transform(_ flatMap (f(_).toTry)))
+
+  def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): Task[E2, A] = {
+    val transformedFuture = self.toFuture.transform {
+      case Failure(e) if NonFatal(e)  => Failure(f(e.asInstanceOf[E]))
+      case Failure(e) if !NonFatal(e) =>
+        Failure(e)
+      case success                    => success
+    }
+    Task[E2, A](transformedFuture)
+  }
+
+  def catchSome[E2 >: E <: Throwable, A2 >: A](pf: PartialFunction[E, Task[E2, A2]])(implicit
+    ec: ExecutionContext
+  ): Task[E2, A2] = {
+    val transformedFuture = self.toFuture.transformWith {
+      case Failure(e) if NonFatal(e) && pf.isDefinedAt(e.asInstanceOf[E]) =>
+        pf(e.asInstanceOf[E]).toFuture
+      case _                                                              =>
+        self.toFuture
+    }
+    Task[E2, A2](transformedFuture)
+  }
+
+  def catchAll[E2 >: E <: Throwable, A2 >: A](f: E => Task[E2, A2])(implicit
+    ec: ExecutionContext
+  ): Task[E2, A2] = {
+    val transformedFuture = self.toFuture.transformWith {
+      case Failure(e) if NonFatal(e)  => f(e.asInstanceOf[E]).toFuture
+      case Failure(e) if !NonFatal(e) =>
+        self.toFuture
+      case _                          => self.toFuture
+    }
+    Task[E2, A2](transformedFuture)
+  }
 }
 
 object Task {
