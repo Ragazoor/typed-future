@@ -174,7 +174,7 @@ Any contribution to more or improved benchmarks are most welcome!
 Run benchmarks
 
 ```shell
-sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 dev.ragz.future.FutureBenchmark"
+sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 io.github.ragazoor.TaskBenchmark"
 ```
 
 Example benchmark
