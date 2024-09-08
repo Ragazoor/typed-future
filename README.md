@@ -155,16 +155,15 @@ There are a few occurrences where we need to manually fix the code:
 
 ```scala
 object ImplicitClassExample {
-  implicit class MyImplicitClassFunction(f: StdFuture[Int])(implicit ec: ExecutionContext) {
-    def bar: StdFuture[Option[Int]] = f.map(Some(_))
+  implicit class MyImplicitClassFunction[A](f: StdFuture[A])(implicit ec: ExecutionContext) {
+    def bar: StdFuture[Option[A]] = f.map(Some(_))
   }
+  def foo: Task[Throwable, Int] = ???
+  /* does not compile */
+  val a: Task[Throwable, Option[Int]] = foo.bar.toTask
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  def foo: Attempt[Throwable, Int] = ???
-
-  val a: Attempt[Throwable, Option[Int]] = foo.bar.attempt // does not compile
-  val b: Attempt[Throwable, Option[Int]] = foo.toFuture.bar.attempt
+  val b: Task[Throwable, Option[Int]] = foo.toFuture.bar.toTask
 }
 ```
 
