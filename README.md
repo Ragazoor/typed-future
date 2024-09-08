@@ -181,14 +181,13 @@ sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 dev.ragz.future.FutureBenchmark"
 Example benchmark
 
 ```text
-[info] Benchmark                        Mode  Cnt   Score   Error  Units
-[info] FutureBenchmark.futureFlatMap   thrpt   10  24.116 ± 0.078  ops/s
-[info] FutureBenchmark.futureMap       thrpt   10  27.629 ± 0.490  ops/s
-[info] FutureBenchmark.futureRecover   thrpt   10  24.488 ± 0.415  ops/s
-[info] FutureBenchmark.futureSequence  thrpt   10   2.004 ± 0.203  ops/s
-[info] FutureBenchmark.taskFlatMap     thrpt   10  22.395 ± 0.375  ops/s
-[info] FutureBenchmark.taskMap         thrpt   10  27.328 ± 0.455  ops/s
-[info] FutureBenchmark.taskMapError    thrpt   10  27.177 ± 0.041  ops/s
-[info] FutureBenchmark.taskSequence    thrpt   10   1.817 ± 0.029  ops/s
-[success] Total time: 1623 s (27:03), completed Feb 20, 2024, 7:02:20 PM
+[info] Benchmark                      Mode  Cnt   Score   Error  Units
+[info] TaskBenchmark.futureFlatMap   thrpt   10  34.419 ± 1.406  ops/s
+[info] TaskBenchmark.futureMap       thrpt   10  34.556 ± 0.850  ops/s
+[info] TaskBenchmark.futureRecover   thrpt   10  33.102 ± 0.802  ops/s
+[info] TaskBenchmark.futureSequence  thrpt   10   1.858 ± 0.019  ops/s
+[info] TaskBenchmark.taskFlatMap     thrpt   10  34.451 ± 0.961  ops/s
+[info] TaskBenchmark.taskMap         thrpt   10  36.490 ± 1.042  ops/s
+[info] TaskBenchmark.taskMapError    thrpt   10  35.284 ± 1.302  ops/s
+[info] TaskBenchmark.taskSequence    thrpt   10   1.558 ± 0.047  ops/s
 ```
