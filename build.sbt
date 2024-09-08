@@ -15,11 +15,11 @@ lazy val root =
     .settings(publish / skip := true)
     .aggregate(result, benchmark, examples)
 
-lazy val result = module("attempt", "result")
+lazy val result = module("task", "task")
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("io.github.ragazoor"))
   .settings(libraryDependencies += munit % Test)
-  .settings(stdSettings("attempt"))
+  .settings(stdSettings("task"))
 
 lazy val examples = module("examples", "examples")
   .enablePlugins(BuildInfoPlugin)
