@@ -1,7 +1,7 @@
 # An error typed Future
 
-A Future based monad with typed errors.
-Designed to be a replacement for the `scala.concurrent.Future`
+A thin wrapper on the Future monad for the purpose of giving it an error type.
+Designed to be an alternative for the `scala.concurrent.Future`
 (I'll call it StdFuture here) with minimal migration needed. Entirely built on top
 of the StdFuture, it has
 the same performance and easily integrates into existing StdFuture
@@ -13,7 +13,7 @@ If you are already used to working with typed errors I would highly
 recommend checking out [ZIO](https://zio.dev/overview/getting-started)
 or [Monix BIO](https://bio.monix.io/docs/introduction) instead.
 However if you do not want to commit to another effect system and
-still want complete control of your types this library is for you.
+still want typed errors feel free to use this library. There also isn't much code and you are free to copy it!
 
 # Installation
 
@@ -29,17 +29,28 @@ libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.0"
 
 # Getting Started
 
+In this library the main monad is called a `Task`, which has the type signature `Task[+E, +A]`.
+This task is just a thin wrapper on top of the future monad, which we have defined here as the
+type alias `type Future[+A] = Task[Throwable, A]`. This is due to convenience so that there is 
+less migration needed.
 ## Examples
 
+In `io.github.ragazoor.implicits._` there is an implicit class that
+allows you to convert from an `StdFuture` to a `Task` using `.toTask`.
 ```scala
-import common.{User, UserRepository}
+import common.User
 import io.github.ragazoor.Future
 import io.github.ragazoor.implicits.StdFutureToTask
 
-class UserServiceExample(userRepo: UserRepository) {
+import scala.concurrent.Future as StdFuture
+
+trait UserRepository {
+  def getUser(id: Int): StdFuture[User]
+
+class UserExample(userRepo: UserRepository) {
   def getUser(id: Int): Future[User] = // Future[User] is an alias for Task[Throwable, User]
     userRepo
-      .getUser(id)
+      .getUser(id)  // This returns a StdFuture
       .toTask // Converts to Task
 }
 ```
@@ -48,7 +59,6 @@ In `io.github.ragazoor.migration.implicits._` there are implicits that
 are used to convert an `Task` to a `StdFuture`. This is useful in a migration
 phase when you have a third party library which depends on getting a
 `StdFuture`.
-
 ```scala
 import common.User
 import io.github.ragazoor.Task
@@ -62,24 +72,17 @@ import scala.concurrent.{ExecutionContext, Future => StdFuture}
  * Imagine this is in a third party library
  */
 trait UserProcess {
-  def process(id: StdFuture[User]): StdFuture[User]
+  def process(id: StdFuture[User]): StdFuture[User]  // Works with StdFutures
 }
 
 class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionContext) {
 
-  /* implicit conversion in io.github.ragazoor.migration.implicits._ converts
-   * the Task to a Future
-   */
-  def getUser(id: Int): Future[User] =
-    userProcess.process {
-      Task.successful(User("Test name", 44))
-    }.toTask
+  def processUser(user: Task[User]): Task[Throwable, User] =
+    userProcess.process(user).toTask  // Here Task -> Future conversion is implicit
 
   // Does the same thing without implicits, but more migration needed
-  def getUserExplicit(id: Int): Future[User] =
-    userProcess.process {
-      Task.successful(User("Test name", 44)).toFuture // Here the conversion to future is explicit
-    }.toTask
+  def processUser2(id: Int): Task[Throwable, User] =
+    userProcess.process(user.toFuture).toTask  // Here Task -> Future conversion is explicit
 }
 
 ```
@@ -106,9 +109,9 @@ import scala.concurrent.ExecutionContext
 class UserServiceTaskExample(userRepo: UserRepository)(implicit ec: ExecutionContext) {
   def getUser(id: Int): Task[UserNotFound, User] =
     userRepo
-            .getUser(id)
-            .toTask // Converts to Task
-            .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
+      .getUser(id)  // Returns a StdFuture
+      .toTask // Converts to Task
+      .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
 }
 ```
 
@@ -152,16 +155,15 @@ There are a few occurrences where we need to manually fix the code:
 
 ```scala
 object ImplicitClassExample {
-  implicit class MyImplicitClassFunction(f: StdFuture[Int])(implicit ec: ExecutionContext) {
-    def bar: StdFuture[Option[Int]] = f.map(Some(_))
+  implicit class MyImplicitClassFunction[A](f: StdFuture[A])(implicit ec: ExecutionContext) {
+    def bar: StdFuture[Option[A]] = f.map(Some(_))
   }
+  def foo: Task[Throwable, Int] = ???
+  /* does not compile */
+  val a: Task[Throwable, Option[Int]] = foo.bar.toTask
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  def foo: Attempt[Throwable, Int] = ???
-
-  val a: Attempt[Throwable, Option[Int]] = foo.bar.attempt // does not compile
-  val b: Attempt[Throwable, Option[Int]] = foo.toFuture.bar.attempt
+  val b: Task[Throwable, Option[Int]] = foo.toFuture.bar.toTask
 }
 ```
 
@@ -172,20 +174,19 @@ Any contribution to more or improved benchmarks are most welcome!
 Run benchmarks
 
 ```shell
-sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 dev.ragz.future.FutureBenchmark"
+sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 io.github.ragazoor.TaskBenchmark"
 ```
 
 Example benchmark
 
 ```text
-[info] Benchmark                        Mode  Cnt   Score   Error  Units
-[info] FutureBenchmark.futureFlatMap   thrpt   10  24.116 ± 0.078  ops/s
-[info] FutureBenchmark.futureMap       thrpt   10  27.629 ± 0.490  ops/s
-[info] FutureBenchmark.futureRecover   thrpt   10  24.488 ± 0.415  ops/s
-[info] FutureBenchmark.futureSequence  thrpt   10   2.004 ± 0.203  ops/s
-[info] FutureBenchmark.taskFlatMap     thrpt   10  22.395 ± 0.375  ops/s
-[info] FutureBenchmark.taskMap         thrpt   10  27.328 ± 0.455  ops/s
-[info] FutureBenchmark.taskMapError    thrpt   10  27.177 ± 0.041  ops/s
-[info] FutureBenchmark.taskSequence    thrpt   10   1.817 ± 0.029  ops/s
-[success] Total time: 1623 s (27:03), completed Feb 20, 2024, 7:02:20 PM
+[info] Benchmark                      Mode  Cnt   Score   Error  Units
+[info] TaskBenchmark.futureFlatMap   thrpt   10  34.419 ± 1.406  ops/s
+[info] TaskBenchmark.futureMap       thrpt   10  34.556 ± 0.850  ops/s
+[info] TaskBenchmark.futureRecover   thrpt   10  33.102 ± 0.802  ops/s
+[info] TaskBenchmark.futureSequence  thrpt   10   1.858 ± 0.019  ops/s
+[info] TaskBenchmark.taskFlatMap     thrpt   10  34.451 ± 0.961  ops/s
+[info] TaskBenchmark.taskMap         thrpt   10  36.490 ± 1.042  ops/s
+[info] TaskBenchmark.taskMapError    thrpt   10  35.284 ± 1.302  ops/s
+[info] TaskBenchmark.taskSequence    thrpt   10   1.558 ± 0.047  ops/s
 ```
