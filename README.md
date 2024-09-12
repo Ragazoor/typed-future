@@ -30,9 +30,9 @@ libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.0"
 # Getting Started
 
 In this library the main monad is called a `Task`, which has the type signature `Task[+E, +A]`.
-This task is just a thin wrapper on top of the future monad, which we have defined here as the
-type alias `type Future[+A] = Task[Throwable, A]`. This is due to convenience so that there is 
-less migration needed.
+This `Task` is just a thin wrapper on top of the Future we know from Scala, which we have defined here as the
+type alias `type Future[+A] = Task[Throwable, A]`. This is so that there is less migration needed if you were to adopt this library.
+
 ## Examples
 
 In `io.github.ragazoor.implicits._` there is an implicit class that
