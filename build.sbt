@@ -1,7 +1,7 @@
 import Dependencies._
 import BuildHelper._
 
-ThisBuild / version                := "0.1.0-SNAPSHOT"
+ThisBuild / version                := "0.1.0-RC1"
 ThisBuild / organization           := "io.github.ragazoor"
 ThisBuild / publishTo              := sonatypePublishToBundle.value
 ThisBuild / sonatypeCredentialHost := "central.sonatype.com"

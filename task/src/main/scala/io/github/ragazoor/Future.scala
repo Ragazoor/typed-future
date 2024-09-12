@@ -3,9 +3,6 @@ package io.github.ragazoor
 import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 import scala.util.Try
 
-/*
- * Testing this to see if it is possible to make it completely drop in
- */
 object Future {
 
   def unapply[E <: Throwable, A](result: Task[E, A]): Option[StdFuture[A]] =

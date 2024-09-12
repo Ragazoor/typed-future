@@ -2,7 +2,7 @@ package io.github.ragazoor
 
 import munit.FunSuite
 
-import scala.concurrent.{ Future => StdFuture }
+import scala.concurrent.{Future => StdFuture}
 import scala.util.Try
 
 class TaskSpec extends FunSuite {
@@ -24,7 +24,7 @@ class TaskSpec extends FunSuite {
 
   case class MyError3(e: Throwable) extends RootError(e)
 
-  test("Attempt using flatmap") {
+  test("Task using flatmap") {
     for {
       a <- Task(1)
       b <- Task.fromFuture(StdFuture(2))
@@ -33,7 +33,7 @@ class TaskSpec extends FunSuite {
     } yield assertEquals(a + b + c + d, 10)
   }
 
-  test("Attempt using flatmap with typed errors") {
+  test("Task using flatmap with typed errors") {
     val a = for {
       a <- Task(1)
       b <- Task(2)
@@ -45,7 +45,7 @@ class TaskSpec extends FunSuite {
     }
   }
 
-  test("Attempt using sequence") {
+  test("Task using sequence") {
     def getResult(i: Int) = Task(i)
 
     Task
@@ -54,7 +54,7 @@ class TaskSpec extends FunSuite {
       .map(sum => assertEquals(sum, 6))
   }
 
-  test("Attempt fail with typed error") {
+  test("Task fail with typed error") {
     def getResult(i: Int) =
       if (i < 2)
         Task.successful(i)
@@ -68,13 +68,13 @@ class TaskSpec extends FunSuite {
       }
   }
 
-  test("Attempt.fromEither fail with typed error") {
+  test("Task.fromEither fail with typed error") {
     Task.fromEither(Left(new RuntimeException("Test message"))).catchSome { case _: RuntimeException =>
       Task.successful(assert(true))
     }
   }
 
-  test("Attempt using flatten") {
+  test("Task using flatten") {
     val result1 = Task(1)
     val result2 = Task(result1)
     result2.flatten.catchSome { case _: IllegalArgumentException =>
@@ -82,12 +82,12 @@ class TaskSpec extends FunSuite {
     }
   }
 
-  test("Attempt apply works") {
+  test("Task apply works") {
     val result = Task(1)
     result.map(one => assertEquals(one, 1))
   }
 
-  test("Attempt can fail using apply") {
+  test("Task can fail using apply") {
     def failingFunc(): Unit = throw new RuntimeException("test message")
 
     val result = Task[Unit](failingFunc()).mapError(MyError.apply)
@@ -96,7 +96,7 @@ class TaskSpec extends FunSuite {
     }
   }
 
-  test("Attempt using zip") {
+  test("Task using zip") {
     val result1 = Task(1)
     val result2 = Task(2)
     result1.zip(result2).map { tuple =>
@@ -104,11 +104,11 @@ class TaskSpec extends FunSuite {
     }
   }
 
-  test("Attempt catchAll") {
+  test("Task catchAll") {
     val a = for {
-      a <- Task.failed(MyError2(new IllegalArgumentException("Bad argument")))
+      _ <- Task.failed(MyError2(new IllegalArgumentException("Bad argument")))
       _ <- Task.failed(MyError(new RuntimeException("test message")))
-    } yield assertEquals(a, -1)
+    } yield assert(false)
     a.catchAll { _ =>
       Task.successful(assert(true))
     }
@@ -125,14 +125,14 @@ class TaskSpec extends FunSuite {
       }
   }
 
-  test("Attempt.failed returns error") {
+  test("Task.failed returns error") {
     Task
       .failed(new IllegalArgumentException("Bad argument"))
       .failed
       .map(e => assertEquals(e.getMessage, "Bad argument"))
   }
 
-  test("Attempt.failed fails with NoSuchElementException if it is a success") {
+  test("Task.failed fails with NoSuchElementException if it is a success") {
     Task
       .successful(1)
       .failed
@@ -142,14 +142,14 @@ class TaskSpec extends FunSuite {
       }
   }
 
-  test("Attempt.mapEither") {
+  test("Task.mapEither") {
     Task
       .successful(1)
       .mapEither(_ => Right(2))
       .map(result => assert(result == 2))
   }
 
-  test("Attempt.mapEither, with typed error") {
+  test("Task.mapEither, with typed error") {
     Task
       .successful(1)
       .mapEither[RuntimeException, Int](_ => Left(new RuntimeException("Test message")))
@@ -159,7 +159,7 @@ class TaskSpec extends FunSuite {
       }
   }
 
-  test("Attempt.mapTry") {
+  test("Task.mapTry") {
     Task
       .successful(1)
       .mapTry(_ => Try(2))
