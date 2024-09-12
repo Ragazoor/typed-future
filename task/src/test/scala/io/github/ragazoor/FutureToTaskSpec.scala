@@ -3,7 +3,7 @@ package io.github.ragazoor
 import io.github.ragazoor.implicits._
 import munit.FunSuite
 
-import scala.concurrent.{Future => StdFuture}
+import scala.concurrent.{ Future => StdFuture }
 
 class FutureToTaskSpec extends FunSuite {
 

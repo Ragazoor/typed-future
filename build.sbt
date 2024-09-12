@@ -2,26 +2,27 @@ import Dependencies._
 import BuildHelper._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
-
 ThisBuild / version                := "0.1.0-RC1"
 ThisBuild / organization           := "io.github.ragazoor"
 ThisBuild / publishTo              := sonatypePublishToBundle.value
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
-inThisBuild(List(
-  organization := "io.github.ragazoor",
-  homepage := Some(url("https://github.com/Ragazoor/typed-future")),
-  // Alternatively License.Apache2 see https://github.com/sbt/librarymanagement/blob/develop/core/src/main/scala/sbt/librarymanagement/License.scala
-  licenses := List("MIT" -> url("https://github.com/Ragazoor/typed-future?tab=MIT-1-ov-file#readme")),
-  developers := List(
-    Developer(
-      "Ragazoor",
-      "Ragnar Englund",
-      "eng.ragnar@gmail.com",
-      url("https://github.com/ragazoor")
+inThisBuild(
+  List(
+    organization := "io.github.ragazoor",
+    homepage     := Some(url("https://github.com/Ragazoor/typed-future")),
+    // Alternatively License.Apache2 see https://github.com/sbt/librarymanagement/blob/develop/core/src/main/scala/sbt/librarymanagement/License.scala
+    licenses     := List("MIT" -> url("https://github.com/Ragazoor/typed-future?tab=MIT-1-ov-file#readme")),
+    developers   := List(
+      Developer(
+        "Ragazoor",
+        "Ragnar Englund",
+        "eng.ragnar@gmail.com",
+        url("https://github.com/ragazoor")
+      )
     )
   )
-))
+)
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
