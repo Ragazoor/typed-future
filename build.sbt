@@ -2,7 +2,7 @@ import Dependencies._
 import BuildHelper._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
-ThisBuild / version                := "v0.1.0"
+ThisBuild / version                := "v0.1.0-SNAPSHOT"
 ThisBuild / organization           := "io.github.ragazoor"
 ThisBuild / publishTo              := sonatypePublishToBundle.value
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
