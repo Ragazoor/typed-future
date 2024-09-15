@@ -2,7 +2,6 @@ import Dependencies._
 import BuildHelper._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
-ThisBuild / publishTo              := sonatypePublishToBundle.value
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
 inThisBuild(
