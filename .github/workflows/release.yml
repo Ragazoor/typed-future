@@ -15,7 +15,7 @@ jobs:
           distribution: temurin
           java-version: 8
           cache: sbt
-      - run: sbt sonatypeCentralRelease
+      - run: sbt -debug sonatypeCentralRelease
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
