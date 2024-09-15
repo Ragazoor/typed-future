@@ -15,7 +15,9 @@ jobs:
           distribution: temurin
           java-version: 8
           cache: sbt
-      - run: sbt -debug sonatypeCentralRelease
+      - name: Set permissions for target directory
+        run: chmod -R 777 ./target
+      - run: sbt sonatypeCentralRelease
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
