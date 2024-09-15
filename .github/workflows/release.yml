@@ -15,8 +15,8 @@ jobs:
           distribution: temurin
           java-version: 8
           cache: sbt
-      - name: compile and create target directory
-        run: sbt compile
+      - name: Create target directory
+        run: mkdir -p ./target/sonatype-staging
       - name: Set permissions for target directory
         run: chmod -R 777 ./target
       - run: sbt sonatypeCentralRelease
