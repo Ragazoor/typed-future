@@ -15,10 +15,12 @@ jobs:
           distribution: temurin
           java-version: 8
           cache: sbt
-      - name: Create target directory
-        run: mkdir -p ./target/sonatype-staging
-      - name: Set permissions for target directory
-        run: chmod -R 777 ./target
+      - run: sbt +publishSigned
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       - run: sbt sonatypeCentralRelease
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
