@@ -6,14 +6,14 @@ Designed to be an alternative for the `scala.concurrent.Future` with minimal mig
 of the Future, it has
 the same performance and easily integrates into existing Future
 based libraries.
-It also extends the api of the StdFuture, which is heavily
+It also extends the api of the Future in a way which is heavily
 inspired by ZIO ([github link](https://github.com/zio/zio)).
 
 If you are already used to working with typed errors I would highly
 recommend checking out [ZIO](https://zio.dev/overview/getting-started)
 or [Monix BIO](https://bio.monix.io/docs/introduction) instead.
 However if you do not want to commit to another effect system and
-still want typed errors feel free to use this library. There also isn't much code and you are free to copy it!
+still want typed errors feel free to use this library, or copy the code to your project.
 
 # Installation
 
