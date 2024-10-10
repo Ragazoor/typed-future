@@ -2,10 +2,9 @@
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
 A thin wrapper on the Future monad for the purpose of giving it an error type.
-Designed to be an alternative for the `scala.concurrent.Future`
-(I'll call it StdFuture here) with minimal migration needed. Entirely built on top
-of the StdFuture, it has
-the same performance and easily integrates into existing StdFuture
+Designed to be an alternative for the `scala.concurrent.Future` with minimal migration needed. Entirely built on top
+of the Future, it has
+the same performance and easily integrates into existing Future
 based libraries.
 It also extends the api of the StdFuture, which is heavily
 inspired by ZIO ([github link](https://github.com/zio/zio)).
@@ -47,15 +46,14 @@ trait UserRepository {
 class UserExample(userRepo: UserRepository) {
   def getUser(id: Int): Future[User] = // Future[User] is an alias for Task[Throwable, User]
     userRepo
-      .getUser(id)  // This returns a StdFuture
+      .getUser(id)  // This returns a scala.concurrent.Future
       .toTask // Converts to Task
 }
 ```
 
 In `io.github.ragazoor.migration.implicits._` there are implicits that
-are used to convert an `Task` to a `StdFuture`. This is useful in a migration
-phase when you have a third party library which depends on getting a
-`StdFuture`.
+are used to convert an `Task` to a `scala.concurrent.Future`. This is useful in a migration
+phase when you have a third party library which depends on Futures.
 ```scala
 import common.User
 import io.github.ragazoor.Task
@@ -69,31 +67,32 @@ import scala.concurrent.{ExecutionContext, Future => StdFuture}
  * Imagine this is in a third party library
  */
 trait UserProcess {
-  def process(id: StdFuture[User]): StdFuture[User]  // Works with StdFutures
+  def process(id: StdFuture[User]): StdFuture[User]  // Works with scala.concurrent.Future
 }
 
 class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionContext) {
 
-  def processUser(user: Task[User]): Task[Throwable, User] =
-    userProcess.process(user).toTask  // Here Task -> Future conversion is implicit
+  def processUser(userTask: Task[User]): Task[Throwable, User] =
+    userProcess.process(userTask)  // Here Task -> Future conversion is implicit
+      .toTask
 
   // Does the same thing without implicits, but more migration needed
-  def processUser2(id: Int): Task[Throwable, User] =
-    userProcess.process(user.toFuture).toTask  // Here Task -> Future conversion is explicit
+  def processUser2(userTask: Task[User]): Task[Throwable, User] =
+    userProcess.process(user.toFuture)  // Here Task -> Future conversion is explicit
+      .toTask
 }
 
 ```
 
 This is the basics for using the `Task` type in
 your code. The Task has the same API
-as the StdFuture, and thanks to the type alias
-`type Future[+A] = Task[Throwable, A]` we don't need to rename StdFutures
-all over the code base.
+as the Future, and thanks to the type alias
+`type Future[+A] = Task[Throwable, A]` we don't need to rename a lot of unnecessary renaming.
 
 ### Error handling
 
-Using the example above it is now trivial to map a failed `StdFuture`
-to an `Task` with an error from our domain model.
+Using the example above it is now trivial to map a failed `scala.concurrent.Future`
+to a `Task` with an error from our domain model.
 
 ```scala 
 import common.{User, UserNotFound, UserRepository}
@@ -106,7 +105,7 @@ import scala.concurrent.ExecutionContext
 class UserServiceTaskExample(userRepo: UserRepository)(implicit ec: ExecutionContext) {
   def getUser(id: Int): Task[UserNotFound, User] =
     userRepo
-      .getUser(id)  // Returns a StdFuture
+      .getUser(id)  // Returns a scala.concurrent.Future
       .toTask // Converts to Task
       .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
 }
