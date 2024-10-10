@@ -3,6 +3,7 @@ import BuildHelper._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
+ThisBuild / sonatypeLogLevel := "trace"
 
 inThisBuild(
   List(
