@@ -1,4 +1,5 @@
 # An error typed Future
+[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
 A thin wrapper on the Future monad for the purpose of giving it an error type.
 Designed to be an alternative for the `scala.concurrent.Future`
@@ -17,14 +18,10 @@ still want typed errors feel free to use this library. There also isn't much cod
 
 # Installation
 
-> [!NOTE]
-> Due to the new sonatype interface the library is not yet available
-> in maven central.
-
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.0"
+libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.15"
 ```
 
 # Getting Started
