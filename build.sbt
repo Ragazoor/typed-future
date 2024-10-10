@@ -3,7 +3,7 @@ import BuildHelper._
 import xerial.sbt.Sonatype.sonatypeCentralHost
 
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
-ThisBuild / sonatypeLogLevel := "debug"
+ThisBuild / sonatypeLogLevel       := "debug"
 
 inThisBuild(
   List(
