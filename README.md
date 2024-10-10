@@ -78,7 +78,7 @@ class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionC
 
   // Does the same thing without implicits, but more migration needed
   def processUser2(userTask: Task[User]): Task[Throwable, User] =
-    userProcess.process(user.toFuture)  // Here Task -> Future conversion is explicit
+    userProcess.process(userTask.toFuture)  // Here Task -> Future conversion is explicit
       .toTask
 }
 
