@@ -20,7 +20,7 @@ still want typed errors feel free to use this library, or copy the code to your 
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.ragazoor" %% "future" % "0.1.15"
+libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.15"
 ```
 
 # Getting Started
