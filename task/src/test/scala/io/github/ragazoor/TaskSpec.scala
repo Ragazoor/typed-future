@@ -180,14 +180,14 @@ class TaskSpec extends FunSuite {
     } yield assert(one == 1)
   }
 
-  test("Foldleft example") {
+  test("Foldleft test with Future") {
     def func(int: Int): Future[Int] = Task.successful(int)
-
     val idList = Seq(1,2,3,4,5,6,7,8)
-    idList.grouped(2).foldLeft(Task.attempt(Seq.empty[Int])) { case (acc, ids) =>
+
+    idList.grouped(2).foldLeft(Future.attempt(Seq.empty[Int])) { case (acc, ids) =>
       for {
         list <- acc
-        newIds <- Task.sequence(ids.map(func))
+        newIds <- Future.sequence(ids.map(func))
       } yield list ++ newIds
     }
   }
