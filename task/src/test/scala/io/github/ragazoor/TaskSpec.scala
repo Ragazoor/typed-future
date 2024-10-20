@@ -166,4 +166,30 @@ class TaskSpec extends FunSuite {
       .map(result => assert(result == 2))
   }
 
+  test("Successful Task can be flat-mapped with an error prone Task") {
+    def func(int: Int): Future[Int] = Task.successful(int)
+    for {
+      list <- Task.successful(Seq(1, 2, 3))
+      _    <- Future.sequence(list.map(func))
+    } yield assert(true)
+  }
+
+  test ("Attempt Task can be flat mapped") {
+    for {
+      one <- Task.attempt(1): Task[Throwable, Int]
+    } yield assert(one == 1)
+  }
+
+  test("Foldleft example") {
+    def func(int: Int): Future[Int] = Task.successful(int)
+
+    val idList = Seq(1,2,3,4,5,6,7,8)
+    idList.grouped(2).foldLeft(Task.attempt(Seq.empty[Int])) { case (acc, ids) =>
+      for {
+        list <- acc
+        newIds <- Task.sequence(ids.map(func))
+      } yield list ++ newIds
+    }
+  }
+
 }
