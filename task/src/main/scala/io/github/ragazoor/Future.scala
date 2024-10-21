@@ -23,6 +23,9 @@ object Future {
   final def successful[A](value: A): Task[Nothing, A] =
     Task.successful(value)
 
+  final def attempt[A](body: => A): Task[Throwable, A] =
+    Task.attempt(body)
+
   final def failed[E <: Exception](exception: E): Task[E, Nothing] =
     Task.failed(exception)
 
