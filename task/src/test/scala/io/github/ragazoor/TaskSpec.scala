@@ -174,7 +174,7 @@ class TaskSpec extends FunSuite {
     } yield assert(true)
   }
 
-  test ("Attempt Task can be flat mapped") {
+  test("Attempt Task can be flat mapped") {
     for {
       one <- Task.attempt(1): Task[Throwable, Int]
     } yield assert(one == 1)
@@ -182,11 +182,11 @@ class TaskSpec extends FunSuite {
 
   test("Foldleft test with Future") {
     def func(int: Int): Future[Int] = Task.successful(int)
-    val idList = Seq(1,2,3,4,5,6,7,8)
+    val idList                      = Seq(1, 2, 3, 4, 5, 6, 7, 8)
 
     idList.grouped(2).foldLeft(Future.attempt(Seq.empty[Int])) { case (acc, ids) =>
       for {
-        list <- acc
+        list   <- acc
         newIds <- Future.sequence(ids.map(func))
       } yield list ++ newIds
     }
