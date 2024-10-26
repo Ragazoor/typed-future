@@ -150,6 +150,9 @@ object Task {
   final def fromTry[A](result: Try[A]): Task[Throwable, A] =
     Task[Throwable, A](StdFuture.fromTry(result))
 
+  final def attempt[A](body: => A): Task[Throwable, A] =
+    Task[Throwable, A](StdFuture.fromTry(Try(body)))
+
   final def successful[A](result: A): Task[Nothing, A] = {
     val future = StdFuture.successful(result)
     new Task[Nothing, A] {
