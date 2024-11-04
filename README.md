@@ -1,8 +1,9 @@
-# An error typed Future
+# An error typed Future[+E, +A]
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 
-A thin wrapper on the Future monad for the purpose of giving it an error type.
-Designed to be an alternative for the `scala.concurrent.Future` with minimal migration needed. Entirely built on top
+A thin wrapper on the Future monad for the purpose of giving it a type parameter for the error channel, giving you
+the power to see _how_ a Future can fail just as clearly as how it can succeed.
+Designed to be an alternative for the `scala.concurrent.Future` with minimal migration needed, entirely built on top
 of the Future, it has
 the same performance and easily integrates into existing Future
 based libraries.
@@ -20,19 +21,19 @@ still want typed errors feel free to use this library, or copy the code to your 
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.15"
+libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.16"
 ```
 
 # Getting Started
 
-In this library the main monad is called a `Task`, which has the type signature `Task[+E, +A]`.
+In this library the monad is called a `Task`, which has the type signature `Task[+E, +A]`.
 This `Task` is just a thin wrapper on top of the Future we know from Scala, which we have defined here as the
-type alias `type Future[+A] = Task[Throwable, A]`. This is so that there is less migration needed if you were to adopt this library.
+type alias `type Future[+A] = Task[Throwable, A]`. This is to keep backward compatability if you were to adopt this library.
 
 ## Examples
 
 In `io.github.ragazoor.implicits._` there is an implicit class that
-allows you to convert from an `StdFuture` to a `Task` using `.toTask`.
+allows you to convert from an `scala.concurrent.Future` to a `Task` using `.toTask`.
 ```scala
 import common.User
 import io.github.ragazoor.Future
@@ -47,7 +48,7 @@ class UserExample(userRepo: UserRepository) {
   def getUser(id: Int): Future[User] = // Future[User] is an alias for Task[Throwable, User]
     userRepo
       .getUser(id)  // This returns a scala.concurrent.Future
-      .toTask // Converts to Task
+      .toTask // Converts to Task[Throwable, User]
 }
 ```
 
@@ -73,20 +74,19 @@ trait UserProcess {
 class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionContext) {
 
   def processUser(userTask: Task[User]): Task[Throwable, User] =
-    userProcess.process(userTask)  // Here Task -> Future conversion is implicit
+    userProcess.process(userTask)    // Using scala.concurrent.Future as input and output, implicit conversion
       .toTask
 
   // Does the same thing without implicits, but more migration needed
   def processUser2(userTask: Task[User]): Task[Throwable, User] =
-    userProcess.process(userTask.toFuture)  // Here Task -> Future conversion is explicit
+    userProcess.process(userTask.toFuture)  // Using scala.concurrent.Future as input and output, explicit conversion
       .toTask
 }
 
 ```
 
 This is the basics for using the `Task` type in
-your code. The Task has the same API
-as the Future, and thanks to the type alias
+your code. The Task has the same API as the Future, and thanks to the type alias
 `type Future[+A] = Task[Throwable, A]` we don't need to rename a lot of unnecessary renaming.
 
 ### Error handling
