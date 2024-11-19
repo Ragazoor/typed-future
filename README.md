@@ -2,14 +2,11 @@
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org) ![CI Badge](https://github.com/ragazoor/typed-future/workflows/CI/badge.svg) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.ragazoor/task_2.13)
 
 
-A thin wrapper on the Future monad for the purpose of giving it a type parameter for the error channel, giving you
-the power to see _how_ a Future can fail just as clearly as how it can succeed.
-Designed to be an alternative for the `scala.concurrent.Future` with minimal migration needed, entirely built on top
-of the Future, it has
-the same performance and easily integrates into existing Future
-based libraries.
-It also extends the api of the Future in a way which is heavily
-inspired by ZIO ([github link](https://github.com/zio/zio)).
+A thin wrapper on the Future monad in order to give it a type parameter for the error channel, enabling you to see how 
+a Future can fail just as how it succeeds.
+Built on top of the `scala.concurrent.Future` there is little migration needed to get started, it has
+the same performance and integrates into existing Future based libraries.
+It also extends the api of the Future to enable working with typed errors.
 
 If you are already used to working with typed errors I would highly
 recommend checking out [ZIO](https://zio.dev/overview/getting-started)
