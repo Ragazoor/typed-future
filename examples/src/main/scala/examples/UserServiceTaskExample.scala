@@ -13,5 +13,5 @@ class UserServiceTaskExample(userRepo: UserRepository)(implicit ec: ExecutionCon
       .toTask // Converts to Task
       .mapError(e =>
         UserNotFound(s"common.User with id $id not found", e)
-      )       // Converts Error from Throwable -> UserNotFound
+      ) // Converts Error from Throwable -> UserNotFound
 }
