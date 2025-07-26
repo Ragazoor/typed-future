@@ -1,177 +1,65 @@
-# An error typed Future: Task[+E, +A]
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org) ![CI Badge](https://github.com/ragazoor/typed-future/workflows/CI/badge.svg) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.ragazoor/task_2.13)
+# The future of scala.concurrent.Future
+![logo.png](logo.png)
+___
+## :star2: Why this library?
 
+`Task` is a lightweight monad which is built on top of `scala.concurrent.Future`, but with a type parameter for the 
+error type. The advantage of this is that if a function return a `Task[DomainException, Int]` it can only fail
+with an error which is a subtype of `DomainException` (or a fatal exception). 
 
-A thin wrapper on the Future monad in order to give it a type parameter for the error channel, enabling you to see how 
-a Future can fail just as how it succeeds.
-Built on top of the `scala.concurrent.Future` there is little migration needed to get started, it has
-the same performance and integrates into existing Future based libraries.
-It also extends the api of the Future to enable working with typed errors.
+`Task` can also be used interchangeably with the `Future` monad and has the same performance. 
+This means that you do not need to learn or introduce a new effect system to your codebase and your code 
+can use the same libraries that you are already using with `Future`. Finally, this library is designed to be as
+lightweight as possible, and has no dependencies.
 
-If you are already used to working with typed errors I would highly
-recommend checking out [ZIO](https://zio.dev/overview/getting-started)
-or [Monix BIO](https://bio.monix.io/docs/introduction) instead.
-However if you do not want to commit to another effect system and
-still want typed errors feel free to use this library, or copy the code to your project.
+### :toolbox: Similar Libraries
+If you are already used to working with typed errors and instead want to go the extra mile to
+change effect system I would recommend checking out [ZIO](https://zio.dev/overview/getting-started)
+or [Monix BIO](https://bio.monix.io/docs/introduction).
 
-# Installation
-
+## Getting Started
+### :gear: Installation
 Setup via `build.sbt`:
 
 ```sbt
-libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.16"
+libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.17"
 ```
 
-# Getting Started
+### Examples
 
-In this library the monad is called a `Task`, which has the type signature `Task[+E, +A]`.
-This `Task` is just a thin wrapper on top of the Future we know from Scala, which we have defined here as the
-type alias `type Future[+A] = Task[Throwable, A]`. This is to keep backward compatability if you were to adopt this library.
-
-## Examples
-
-In `io.github.ragazoor.implicits._` there is an implicit class that
-allows you to convert from an `scala.concurrent.Future` to a `Task` using `.toTask`.
-```scala
-import common.User
-import io.github.ragazoor.Future
-import io.github.ragazoor.implicits.StdFutureToTask
-
-import scala.concurrent.Future as StdFuture
-
-trait UserRepository {
-  def getUser(id: Int): StdFuture[User]
-
-class UserExample(userRepo: UserRepository) {
-  def getUser(id: Int): Future[User] = // Future[User] is an alias for Task[Throwable, User]
-    userRepo
-      .getUser(id)  // This returns a scala.concurrent.Future
-      .toTask // Converts to Task[Throwable, User]
-}
-```
-
-In `io.github.ragazoor.migration.implicits._` there are implicits that
-are used to convert an `Task` to a `scala.concurrent.Future`. This is useful in a migration
-phase when you have a third party library which depends on Futures.
-```scala
-import common.User
-import io.github.ragazoor.Task
-import io.github.ragazoor.Future
-import io.github.ragazoor.migration.implicits._
-import io.github.ragazoor.implicits.StdFutureToTask
-
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
-
-/*
- * Imagine this is in a third party library
- */
-trait UserProcess {
-  def process(id: StdFuture[User]): StdFuture[User]  // Works with scala.concurrent.Future
-}
-
-class UserServiceFutureExample(userProcess: UserProcess)(implicit ec: ExecutionContext) {
-
-  def processUser(userTask: Task[User]): Task[Throwable, User] =
-    userProcess.process(userTask)    // Using scala.concurrent.Future as input and output, implicit conversion
-      .toTask
-
-  // Does the same thing without implicits, but more migration needed
-  def processUser2(userTask: Task[User]): Task[Throwable, User] =
-    userProcess.process(userTask.toFuture)  // Using scala.concurrent.Future as input and output, explicit conversion
-      .toTask
-}
-
-```
-
-This is the basics for using the `Task` type in
-your code. The Task has the same API as the Future, and thanks to the type alias
-`type Future[+A] = Task[Throwable, A]` we don't need to rename a lot of unnecessary renaming.
-
-### Error handling
-
-Using the example above it is now trivial to map a failed `scala.concurrent.Future`
-to a `Task` with an error from our domain model.
-
-```scala 
-import common.{User, UserNotFound, UserRepository}
-import io.github.ragazoor.Task
-import io.github.ragazoor.implicits.StdFutureToTask
-
-import scala.concurrent.ExecutionContext
-
-
-class UserServiceTaskExample(userRepo: UserRepository)(implicit ec: ExecutionContext) {
-  def getUser(id: Int): Task[UserNotFound, User] =
-    userRepo
-      .getUser(id)  // Returns a scala.concurrent.Future
-      .toTask // Converts to Task
-      .mapError(e => UserNotFound(s"common.User with id $id not found", e)) // Converts Error from Throwable -> UserNotFound
-}
-```
+- Basic usage [link](examples/src/main/scala/io/github/ragazoor/task/examples/basic/BasicMain.scala):
+  - Code with error types 
+  - Conversion from `Future` to `Task`
+  - Mapping errors `Throwable` to custom error type
+- Interoperability with `scala.concurrent.Future` libraries [link](examples/src/main/scala/io/github/ragazoor/task/examples/interop/InteropMain.scala):
+- Migrating from `scala.concurrent.Future` to `Task` [link](examples/src/main/scala/io/github/ragazoor/task/examples/migration/MigrationExample.scala):
 
 ## Migration
 
-The goal of the library is not to replace everything in `scala.concurrent.*`
-since this would require a re-implementation of several key components. The
-goal is rather to provide a typed alternative to the Future and
-use the rest from the standard library.
+The goal of this library is to be as lightweight as possible, with this in mind I am reusing as much as possible
+from `scala.concurrent.*`. This makes migration easy as well, it is mostly about replacing 
+`scala.concurrent.Future` with `io.github.ragazoor.task.*` and `io.github.ragazoor.task.implicits.*`.
 
-The migration depends on how much of the `scala.concurrent` library you are
-using. This example is for a migration where the project is only using
-ExecutionContext and Future from `scala.concurrent`.
-
-```text
-replace: 
-import scala.concurrent.*
-
-with: 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
-import io.github.ragazoor.*
-import io.github.ragazoor.implicits.*
-import io.github.ragazoor.migration.implicits.*
-```
-
-There are a few occurrences where we need to manually fix the code:
+You have to fix the code manually mainly in the following ways:
 
 - If we are using a third-party library returning a `scala.concurrent.Future`
-  we need to convert it to `Task` using `.toTask` and the implicit
-  `io.github.ragazoor.implicits.StdFutureToTask`.
-- If there are async tests using `StdFuture` but does not
-  have `scala.concurrent` imported we need to add
-  `import io.github.ragazoor.migration.implicits._`.
-- If you have interfaces in your code like `A => StdFuture[B]` there are
-  implicits in `import io.github.ragazoor.migration.implicits._` which 
-  help with this.
+  we need to convert it to `Task` using `.toTask` and the implicit class in
+  `io.github.ragazoor.task.implicits.FutureToTask`.
+- If we are using implicit classes which act on `scala.concurrent.Future`, fix the 
+  implicit class or convert task to `Future` using `.toFuture`
+- If you have interfaces in your code like `A => StdFuture[B]`, which are hard to change,
+  there are implicits in `import io.github.ragazoor.task.migration.implicits._` to help.
 - If you are using implicit classes that extends `scala.concurrent.Future`
   the compiler will not be able to convert
   like one might think using the migration implicits. So we need to make
   it explicit:
 
-```scala
-object ImplicitClassExample {
-  implicit class MyImplicitClassFunction[A](f: StdFuture[A])(implicit ec: ExecutionContext) {
-    def bar: StdFuture[Option[A]] = f.map(Some(_))
-  }
-  def foo: Task[Throwable, Int] = ???
-  /* does not compile */
-  val a: Task[Throwable, Option[Int]] = foo.bar.toTask
-
-  import scala.concurrent.ExecutionContext.Implicits.global
-  val b: Task[Throwable, Option[Int]] = foo.toFuture.bar.toTask
-}
-```
-
 ## Benchmarks
-
-Any contribution to more or improved benchmarks are most welcome!
-
-Run benchmarks
-
+Run benchmarks with
 ```shell
-sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 io.github.ragazoor.TaskBenchmark"
+sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 io.github.ragazoor.task.TaskBenchmark"
 ```
-
-Example benchmark
 
 ```text
 [info] Benchmark                      Mode  Cnt   Score   Error  Units
