@@ -2,7 +2,7 @@ package io.github.ragazoor.task.migration
 
 import io.github.ragazoor.task.Task
 
-import scala.concurrent.{Future => StdFuture}
+import scala.concurrent.{ Future => StdFuture }
 import scala.language.implicitConversions
 
 trait TaskToFuture {

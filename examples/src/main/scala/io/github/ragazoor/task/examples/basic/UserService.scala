@@ -2,7 +2,7 @@ package io.github.ragazoor.task.examples.basic
 
 import io.github.ragazoor.task.Task
 import io.github.ragazoor.task.examples.utils.User
-import io.github.ragazoor.task.examples.utils.exceptions.{DomainException, NotAllowedException}
+import io.github.ragazoor.task.examples.utils.exceptions.{ DomainException, NotAllowedException }
 
 /**
  * Toy example to show how Task's with different failure types composes.

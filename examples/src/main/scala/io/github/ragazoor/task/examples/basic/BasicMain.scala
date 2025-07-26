@@ -2,7 +2,7 @@ package io.github.ragazoor.task.examples.basic
 
 import io.github.ragazoor.task.examples.interop.FutureService
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 object BasicMain extends App {
   private val userRepo    = new UserRepositoryImpl()

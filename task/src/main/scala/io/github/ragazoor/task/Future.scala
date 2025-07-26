@@ -1,6 +1,6 @@
 package io.github.ragazoor.task
 
-import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.concurrent.{ ExecutionContext, Future => StdFuture }
 import scala.util.Try
 
 object Future {

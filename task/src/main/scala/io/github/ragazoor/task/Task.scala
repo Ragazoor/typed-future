@@ -1,13 +1,13 @@
 package io.github.ragazoor.task
 
-import io.github.ragazoor.task.TaskUtils.{failedFailure, zipWithTuple2Fun}
+import io.github.ragazoor.task.TaskUtils.{ failedFailure, zipWithTuple2Fun }
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, TimeoutException, Future => StdFuture}
+import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   self =>

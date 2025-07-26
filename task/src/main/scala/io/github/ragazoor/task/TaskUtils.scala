@@ -4,7 +4,7 @@ import scala.util.Failure
 import scala.util.control.NoStackTrace
 
 object TaskUtils {
-  private[task] final val failedFailure                  =
+  private[task] final val failedFailure                      =
     Failure[Nothing](
       new NoSuchElementException("Future.failed not completed with error E.") with NoStackTrace
     )
