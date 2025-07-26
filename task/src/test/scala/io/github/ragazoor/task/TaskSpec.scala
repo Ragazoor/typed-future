@@ -1,7 +1,5 @@
-package ragazoor.task.task
+package io.github.ragazoor.task
 
-import io.github.ragazoor
-import io.github.ragazoor.task.Future
 import munit.FunSuite
 
 import scala.concurrent.{Future => StdFuture}
