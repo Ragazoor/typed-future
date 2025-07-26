@@ -4,7 +4,7 @@
 ___
 ## 🧰 Why this library?
 
-`Task` is a lightweight monad which is built on top of `scala.concurrent.Future`, but with a type parameter for the 
+`Task[E, A]` is a lightweight monad which is built on top of `scala.concurrent.Future`, but with a type parameter for the 
 error type. The advantage of this is that if a function return a `Task[DomainException, Int]` it can only fail
 with an error which is a subtype of `DomainException` (or a fatal exception). 
 
