@@ -1,4 +1,4 @@
-package io.github.ragazoor
+package io.github.ragazoor.task
 
 import munit.FunSuite
 
