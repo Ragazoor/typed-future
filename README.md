@@ -2,7 +2,7 @@
 # The future of scala.concurrent.Future
 ![logo.png](logo.png)
 ___
-## :star2: Why this library?
+## :toolbox: Why this library?
 
 `Task` is a lightweight monad which is built on top of `scala.concurrent.Future`, but with a type parameter for the 
 error type. The advantage of this is that if a function return a `Task[DomainException, Int]` it can only fail
@@ -13,13 +13,13 @@ This means that you do not need to learn or introduce a new effect system to you
 can use the same libraries that you are already using with `Future`. Finally, this library is designed to be as
 lightweight as possible, and has no dependencies.
 
-### :toolbox: Similar Libraries
+### Similar Libraries
 If you are already used to working with typed errors and instead want to go the extra mile to
 change effect system I would recommend checking out [ZIO](https://zio.dev/overview/getting-started)
 or [Monix BIO](https://bio.monix.io/docs/introduction).
 
-## Getting Started
-### :gear: Installation
+## :gear: Getting Started
+### Installation
 Setup via `build.sbt`:
 
 ```sbt
@@ -35,7 +35,7 @@ libraryDependencies += "io.github.ragazoor" %% "task" % "0.1.17"
 - Interoperability with `scala.concurrent.Future` libraries [link](examples/src/main/scala/io/github/ragazoor/task/examples/interop/InteropMain.scala):
 - Migrating from `scala.concurrent.Future` to `Task` [link](examples/src/main/scala/io/github/ragazoor/task/examples/migration/MigrationExample.scala):
 
-## Migration
+## :clipboard: Migration
 
 The goal of this library is to be as lightweight as possible, with this in mind I am reusing as much as possible
 from `scala.concurrent.*`. This makes migration easy as well, it is mostly about replacing 
@@ -55,7 +55,7 @@ You have to fix the code manually mainly in the following ways:
   like one might think using the migration implicits. So we need to make
   it explicit:
 
-## Benchmarks
+## :rocket: Benchmarks
 Run benchmarks with
 ```shell
 sbt "benchmark/jmh:run -i 10 -wi 10 -f 1 -t 1 io.github.ragazoor.task.TaskBenchmark"
