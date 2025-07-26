@@ -1,8 +1,10 @@
-package io.github.ragazoor
+package ragazoor.task.task
 
+import io.github.ragazoor
+import io.github.ragazoor.task.Future
 import munit.FunSuite
 
-import scala.concurrent.{ Future => StdFuture }
+import scala.concurrent.{Future => StdFuture}
 import scala.util.Try
 
 class TaskSpec extends FunSuite {

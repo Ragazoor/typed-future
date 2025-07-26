@@ -1,13 +1,13 @@
-package io.github.ragazoor
+package io.github.ragazoor.task
 
-import io.github.ragazoor.TaskUtils.{ failedFailure, zipWithTuple2Fun }
+import io.github.ragazoor.task.TaskUtils.{failedFailure, zipWithTuple2Fun}
 
 import scala.concurrent.ExecutionContext.parasitic
 import scala.concurrent.duration.Duration
-import scala.concurrent.{ Awaitable, CanAwait, ExecutionContext, Future => StdFuture, TimeoutException }
+import scala.concurrent.{Awaitable, CanAwait, ExecutionContext, TimeoutException, Future => StdFuture}
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   self =>
@@ -97,8 +97,7 @@ sealed trait Task[+E <: Throwable, +A] extends Awaitable[A] {
   def mapError[E2 <: Throwable](f: E => E2)(implicit ec: ExecutionContext): Task[E2, A] = {
     val transformedFuture = self.toFuture.transform {
       case Failure(e) if NonFatal(e)  => Failure(f(e.asInstanceOf[E]))
-      case Failure(e) if !NonFatal(e) =>
-        Failure(e)
+      case Failure(e) if !NonFatal(e) => Failure(e)
       case success                    => success
     }
     Task[E2, A](transformedFuture)
@@ -133,7 +132,7 @@ object Task {
   def unapply[E <: Throwable, A](result: Task[E, A]): Option[StdFuture[A]] =
     Some(result.toFuture)
 
-  private[ragazoor] final def apply[E <: Throwable, A](future: StdFuture[A]): Task[E, A] =
+  private[task] final def apply[E <: Throwable, A](future: StdFuture[A]): Task[E, A] =
     new Task[E, A] {
       override def toFuture: StdFuture[A] = future
     }

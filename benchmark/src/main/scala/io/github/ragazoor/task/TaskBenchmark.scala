@@ -1,11 +1,11 @@
-package io.github.ragazoor
+package io.github.ragazoor.task
 
 import org.openjdk.jmh.annotations._
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ ExecutionContext, Future => StdFuture }
-import scala.util.{ Success, Try }
+import scala.concurrent.{ExecutionContext, Future => StdFuture}
+import scala.util.{Success, Try}
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.Throughput))
